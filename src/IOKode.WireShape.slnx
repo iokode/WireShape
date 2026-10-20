@@ -1,0 +1,21 @@
+<Solution>
+  <Project Path="WireShape/WireShape.csproj" />
+  <Project Path="WireShape.ComponentModel/WireShape.ComponentModel.csproj" />
+  <Project Path="WireShape.OpenApi/WireShape.OpenApi.csproj" />
+  <Project Path="WireShape.Swashbuckle/WireShape.Swashbuckle.csproj" />
+  <Project Path="WireShape.AspNetCore/WireShape.AspNetCore.csproj" />
+  <Project Path="WireShape.OpenApi.Testing/WireShape.OpenApi.Testing.csproj" />
+  <Project Path="WireShape.SystemTextJson/WireShape.SystemTextJson.csproj" />
+  <Project Path="WireShape.CSharpClient/WireShape.CSharpClient.csproj" />
+  <Folder Name="/Tests/">
+    <Project Path="Tests.WireShape/Tests.WireShape.csproj" />
+    <Project Path="Tests.WireShape.ComponentModel/Tests.WireShape.ComponentModel.csproj" />
+    <Project Path="Tests.WireShape.OpenApi/Tests.WireShape.OpenApi.csproj" />
+    <Project Path="Tests.WireShape.Swashbuckle/Tests.WireShape.Swashbuckle.csproj" />
+    <Project Path="Tests.WireShape.AspNetCore/Tests.WireShape.AspNetCore.csproj" />
+    <Project Path="Tests.WireShape.OpenApi.Testing/Tests.WireShape.OpenApi.Testing.csproj" />
+    <Project Path="Tests.WireShape.SystemTextJson/Tests.WireShape.SystemTextJson.csproj" />
+    <Project Path="Tests.WireShape.CSharpClient/Tests.WireShape.CSharpClient.csproj" />
+    <Project Path="Tests.WireShape.Documentation/Tests.WireShape.Documentation.csproj" />
+  </Folder>
+</Solution>

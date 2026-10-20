@@ -1,0 +1,18 @@
+<Project>
+
+    <PropertyGroup Label="Build settings">
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AssemblyName>IOKode.$(MSBuildProjectName)</AssemblyName>
+        <TargetName>$(AssemblyName)</TargetName>
+        <RootNamespace>$(AssemblyName)</RootNamespace>
+        <ImplicitUsings>disable</ImplicitUsings>
+    </PropertyGroup>
+
+    <PropertyGroup Label="GitHub Actions settings" Condition="'$(GITHUB_ACTIONS)' == 'true'">
+        <Deterministic>true</Deterministic>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    </PropertyGroup>
+
+</Project>

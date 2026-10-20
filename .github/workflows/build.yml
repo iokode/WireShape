@@ -1,0 +1,39 @@
+name: Build
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - run: dotnet restore src/IOKode.WireShape.slnx
+
+      - run: dotnet build src/IOKode.WireShape.slnx --configuration Release --no-restore
+
+      - run: dotnet test src/IOKode.WireShape.slnx --configuration Release --no-build
+
+  pack:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # Packed and kept, and not published: what version is published, and when, is not decided by a push.
+      - run: dotnet pack src/IOKode.WireShape.slnx --configuration Release --output packages
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: |
+            packages/*.nupkg
+            packages/*.snupkg

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../Packable.props"/>
+
+    <ItemGroup>
+        <PackageReference Include="Swashbuckle.AspNetCore"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../WireShape.OpenApi/WireShape.OpenApi.csproj"/>
+    </ItemGroup>
+
+</Project>

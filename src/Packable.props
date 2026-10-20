@@ -1,0 +1,30 @@
+<Project>
+
+    <PropertyGroup Label="Package settings">
+        <IsPackable>true</IsPackable>
+        <Version>0.1.0-dev7</Version>
+        <PackageId>$(AssemblyName)</PackageId>
+        <Authors>IOKode</Authors>
+        <Copyright>Copyright (c) 2026, IOKode</Copyright>
+        <Description>The written form of a value, declared once as data and read by whoever has to describe it, declare it to a caller or read it back out of text.</Description>
+        <PackageTags>wire, serialization, json, openapi, schema, api-client</PackageTags>
+        <PackageLicenseFile>LICENCE</PackageLicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageProjectUrl>https://github.com/iokode/WireShape</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/iokode/WireShape</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <ItemGroup Label="Files the package carries">
+        <None Include="$(MSBuildThisFileDirectory)../LICENCE" Pack="true" PackagePath="" Visible="false"/>
+        <None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="" Visible="false"/>
+    </ItemGroup>
+
+    <PropertyGroup Label="Debugging settings">
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+</Project>

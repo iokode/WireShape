@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../Tests.props"/>
+
+    <ItemGroup>
+        <ProjectReference Include="../WireShape.OpenApi.Testing/WireShape.OpenApi.Testing.csproj"/>
+        <ProjectReference Include="../WireShape.SystemTextJson/WireShape.SystemTextJson.csproj"/>
+    </ItemGroup>
+
+</Project>

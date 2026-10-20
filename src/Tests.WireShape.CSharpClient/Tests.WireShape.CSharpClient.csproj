@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../Tests.props" />
+
+    <ItemGroup>
+        <ProjectReference Include="../WireShape.CSharpClient/WireShape.CSharpClient.csproj" />
+        <ProjectReference Include="../WireShape.SystemTextJson/WireShape.SystemTextJson.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    </ItemGroup>
+
+</Project>

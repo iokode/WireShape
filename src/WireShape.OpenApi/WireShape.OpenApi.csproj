@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../Packable.props"/>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.OpenApi"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../WireShape/WireShape.csproj"/>
+    </ItemGroup>
+
+</Project>
