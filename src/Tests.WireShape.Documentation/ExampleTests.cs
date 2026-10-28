@@ -83,8 +83,8 @@ public class ExampleTests
     }
 
     /// <summary>
-    /// Declared to travel as a number, so the numbers its own members carry are what travel, and the chapter on
-    /// enumerations says so.
+    /// Nothing is declared of it, no form and no word, so it travels as the numbers its writer writes, which are
+    /// the ones its own members carry, and the chapter on enumerations says so.
     /// </summary>
     [Fact]
     public void AnEnumerationNobodyDeclaredWordsFor_ShouldTravelAsItsNumbers()
