@@ -20,6 +20,33 @@ public abstract record Shape
     }
 
     /// <summary>
+    /// The form as a sentence says it, which is what a refusal that names a form shows: the form, and not the
+    /// records that hold it.
+    /// </summary>
+    public sealed override string ToString() => this switch
+    {
+        As value => $"a value carried as {Describe(value.By)}",
+        AsText text => "a text" +
+                       (text.Pattern != null ? $" matching '{text.Pattern}'" : "") +
+                       (text.Format != null ? $" under the format '{text.Format}'" : "") +
+                       (text.IsSelfExplanatory ? ", self-explanatory" : ""),
+        AsAnother another => $"another type of the wire, '{another.Type.FullName}'",
+        AsFile => "the content of a file",
+        OneOf union => $"one of several forms: {string.Join(", ", union.Alternatives.Select(Describe))}",
+        Unwraps unwraps => $"a wrapper that disappears, leaving its generic argument {unwraps.ArgumentIndex}",
+        Members members =>
+            $"an object with the members {string.Join(", ", members.Value.Select(member => $"'{member.Name}'"))}",
+        _ => GetType().Name
+    };
+
+    private static string Describe(WireShape.Carrier carrier) =>
+        $"'{carrier.Type.FullName}'" +
+        (carrier.Format != null ? $" under the format '{carrier.Format}'" : "") +
+        (carrier.IsSelfExplanatory ? ", self-explanatory" : "");
+
+    private static string Describe(Alternative alternative) => $"'{alternative.Name}' ({alternative.Form})";
+
+    /// <summary>
     /// What it travels whole as, or null when it does not travel whole as a value. It is the one question every
     /// form answers, and the only thing some of what reads a declaration ever asks.
     /// </summary>
