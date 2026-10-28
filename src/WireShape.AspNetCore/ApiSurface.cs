@@ -28,12 +28,10 @@ namespace IOKode.WireShape.AspNetCore;
 /// What the application is configured with, which is where whoever reads says how a route of theirs is built.
 /// </param>
 /// <param name="belongs">Whether an action is one of the calls being read.</param>
-/// <param name="operationOf">What stands behind an action, where anything does.</param>
 public sealed class ApiSurface(
     Assembly controllers,
     Action<MvcOptions> conventions,
-    Func<MethodInfo, bool> belongs,
-    Func<MethodInfo, Type?> operationOf)
+    Func<MethodInfo, bool> belongs)
 {
     /// <summary>
     /// The calls of the assembly that belong to this surface, read from the explorer without starting a server,
@@ -76,7 +74,6 @@ public sealed class ApiSurface(
 
             Route = "/" + description.RelativePath,
             Controller = action.ControllerName,
-            Operation = operationOf(action.MethodInfo),
             MethodName = MethodNameOf(action),
             Parameters = parameters,
             Result = ResultOf(action.MethodInfo),

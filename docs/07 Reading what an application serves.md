@@ -13,22 +13,20 @@ Everything here is of the booking API of [getting started](02%20Getting%20starte
 var actions = new ApiSurface(
     typeof(BookingsController).Assembly,
     options => options.Conventions.Add(new FlightsRouteConvention()),
-    method => method.GetCustomAttribute<ServedAttribute>() != null,
-    method => method.GetCustomAttribute<SourceCommandAttribute>()?.CommandType).GetActions();
+    method => method.GetCustomAttribute<ServedAttribute>() != null).GetActions();
 ```
 
 The calls are asked of the explorer of the application the host would build. The explorer is what says how an API
 looks from outside, and it is what whoever writes a document reads as well. No server is started, no database is
 opened and no controller is instantiated.
 
-Three things are yours, and they are the three arguments after the assembly:
+Two things are yours, and they are the two arguments after the assembly:
 
 - **the conventions** the application is configured with, which is where a route of yours is built. Whatever
   decides a path — a prefix per assembly, a segment per module, one per kind of caller — has its say here, so the
   route that comes out is the route that is served.
 - **whether an action belongs** to the surface being read. One assembly can serve two surfaces, such as one API
   for customers and another for administrators, and only you know which of them an action belongs to.
-- **what stands behind an action**, where anything does: the command or the query it comes from. Null is an answer.
 
 Each action comes out as an `ApiAction`: the method and the route, the controller it is on, the name the call takes
 in a client, what it takes, what it answers with, and whether it answers with a file or is sent in parts.
@@ -38,7 +36,6 @@ in a client, what it takes, what it answers with, and whether it answers with a 
 | `Method`, `Route` | The explorer, so the route is the one the application serves |
 | `Controller` | The controller the action is on, named as the application names it and not cut down: what a client made of its calls is called is yours |
 | `MethodName` | The method, with `Async` added where its name does not say so already, because every call is awaited |
-| `Operation` | What you answered stands behind it |
 | `Parameters` | One per parameter of the action |
 | `Result` | What the action says it answers with, for a status code in the 200s |
 | `IsDownload` | Whether that answer is a result of its own rather than a value |

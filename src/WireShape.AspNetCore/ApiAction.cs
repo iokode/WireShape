@@ -24,7 +24,7 @@ public sealed record ApiParameter(string Name, Type Type, ApiParameterOrigin Ori
 
 /// <summary>
 /// One call of the API, as the application serves it: the method and the path it answers, what it takes and what
-/// it gives back, and the operation it stands for.
+/// it gives back.
 /// </summary>
 public sealed record ApiAction
 {
@@ -47,12 +47,6 @@ public sealed record ApiAction
     /// and so is what a client made of its calls is called. Nothing here takes a word off either end.
     /// </remarks>
     public required string Controller { get; init; }
-
-    /// <summary>
-    /// The command or the query the action invokes, which is what the call is named after. Null for an action
-    /// that stands for no operation of its own, which is named after its method instead.
-    /// </summary>
-    public Type? Operation { get; init; }
 
     /// <summary>
     /// The name the call takes in a client: the name of the method, with <c>Async</c> added where it does not end

@@ -50,13 +50,6 @@ public class ApiSurfaceTests
     }
 
     [Fact]
-    public void WhatStandsBehindAnAction_ShouldBeWhoeverReadsWasAskedFor()
-    {
-        // Assert
-        Assert.All(actions, action => Assert.Equal(typeof(Consignment), action.Operation));
-    }
-
-    [Fact]
     public void WhatThePathIsMadeOf_ShouldComeFromTheRouteAndNeverBeAbsent()
     {
         // Act
@@ -141,8 +134,7 @@ public class ApiSurfaceTests
         return new ApiSurface(
             typeof(ShipmentsController).Assembly,
             _ => { },
-            method => method.GetCustomAttribute<ServedAttribute>() != null,
-            _ => typeof(Consignment)).GetActions();
+            method => method.GetCustomAttribute<ServedAttribute>() != null).GetActions();
     }
 }
 

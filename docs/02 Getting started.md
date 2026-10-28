@@ -179,8 +179,7 @@ One converter serves every value of the wire that can be read from text at all.
 var actions = new ApiSurface(
     typeof(BookingsController).Assembly,
     options => options.Conventions.Add(new FlightsRouteConvention()),
-    method => method.GetCustomAttribute<ServedAttribute>() != null,
-    method => null).GetActions();
+    method => method.GetCustomAttribute<ServedAttribute>() != null).GetActions();
 
 var mentioned = actions.SelectMany(action => action.Parameters
     .Select(parameter => (Type?) parameter.Type)
