@@ -43,9 +43,9 @@ public enum ValueKind
 /// and may be ignored by every reader.
 /// </param>
 /// <param name="IsSelfExplanatory">
-/// Whether the language of whoever reads has a kind of its own for this already, which is the case of the ones
-/// that stand for a moment in time. A name of ours over such a value hides what the reader would otherwise
-/// recognize, and a client written from it would wrap a date of its own language in a type of ours.
+/// Whether the language of whoever reads has a kind of its own for this already, as it has for a date or a moment
+/// in time. A name of ours over such a value hides what the reader would otherwise recognize, and a client written
+/// from it would wrap a date of its own language in a type of ours.
 /// </param>
 public sealed record Carrier(
     System.Type Type,
