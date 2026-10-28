@@ -93,8 +93,9 @@ public class SchemasTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(JsonSchemaType), new Shape.As(Carrier.String));
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(JsonSchemaType), new Shape.As(Carrier.String));
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
         var wire = declaring.Build(serializer);
 
         // Act
@@ -113,7 +114,8 @@ public class SchemasTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(DeclaredValue), new Shape.AsFile());
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(DeclaredValue), new Shape.AsFile());
         var wire = declaring.Build(serializer);
 
         // Act
@@ -141,7 +143,8 @@ public class SchemasTests
         });
 
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), union);
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), union);
         var wire = declaring.Build(serializer);
 
         // Act
@@ -207,7 +210,8 @@ public class SchemasTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(IReadOnlyList<DeclaredValue>), new Shape.Unwraps(0));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(IReadOnlyList<DeclaredValue>), new Shape.Unwraps(0));
         var wire = declaring.Build(serializer);
 
         // Act
@@ -222,8 +226,9 @@ public class SchemasTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
-        declaring.Add(typeof(DispatchedOn), new Shape.AsAnother(typeof(DeclaredValue)));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        declarer.Add(typeof(DispatchedOn), new Shape.AsAnother(typeof(DeclaredValue)));
         var wire = declaring.Build(serializer);
 
         // Act
@@ -238,8 +243,9 @@ public class SchemasTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.AsText(Pattern: "^[A-Z]{2}[0-9]{9}$"));
-        declaring.Add(typeof(DispatchedOn), new Shape.As(Carrier.DateOnly));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.AsText(Pattern: "^[A-Z]{2}[0-9]{9}$"));
+        declarer.Add(typeof(DispatchedOn), new Shape.As(Carrier.DateOnly));
         var wire = declaring.Build(serializer);
 
         // Act

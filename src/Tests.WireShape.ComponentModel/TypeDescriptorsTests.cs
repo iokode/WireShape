@@ -18,7 +18,8 @@ public class TypeDescriptorsTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
         var wire = declaring.Build(serializer);
 
         // Act
@@ -33,7 +34,8 @@ public class TypeDescriptorsTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(ParcelWeight), new Shape.As(Carrier.Decimal));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(ParcelWeight), new Shape.As(Carrier.Decimal));
         var wire = declaring.Build(serializer);
 
         // Act
@@ -48,7 +50,8 @@ public class TypeDescriptorsTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
         var wire = declaring.Build(serializer);
 
         // Act
@@ -65,7 +68,8 @@ public class TypeDescriptorsTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(new Carrier(typeof(JsonElement), ValueKind.Text)));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(new Carrier(typeof(JsonElement), ValueKind.Text)));
         var wire = declaring.Build(serializer);
 
         // Act
@@ -80,7 +84,8 @@ public class TypeDescriptorsTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(Consignee), new Shape.Members(new[]
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(Consignee), new Shape.Members(new[]
         {
             new Member("name", typeof(string), IsOptional: false),
             new Member("street", typeof(string), IsOptional: false)
@@ -99,7 +104,8 @@ public class TypeDescriptorsTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
         var wire = declaring.Build(serializer);
 
         // Act

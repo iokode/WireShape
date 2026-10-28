@@ -22,43 +22,42 @@ public static class Flights
     public static WireBuilder Declare()
     {
         var declaring = new WireBuilder();
+        var bookings = declaring.GetDeclarer("bookings");
 
         // Values a converter of their own writes, which is why they are declared at all.
-        declaring.Add<BookingReference>(new Shape.AsText(Pattern: "^[A-Z]{6}$"));
-        declaring.Add<PassengerId>(new Shape.As(Carrier.Guid));
-        declaring.Add<FlightDuration>(new Shape.As(Carrier.Int64));
-        declaring.Add<DepartsOn>(new Shape.As(Carrier.DateOnly));
+        bookings.Add<BookingReference>(new Shape.AsText(Pattern: "^[A-Z]{6}$"));
+        bookings.Add<PassengerId>(new Shape.As(Carrier.Guid));
+        bookings.Add<FlightDuration>(new Shape.As(Carrier.Int64));
+        bookings.Add<DepartsOn>(new Shape.As(Carrier.DateOnly));
 
         // A moment in time of its own: the reader's language has a kind for it, so no name of ours goes over it.
-        declaring.Add<BoardingAt>(
+        bookings.Add<BoardingAt>(
             new Shape.AsText(Format: "date-time", IsSelfExplanatory: true));
 
         // It travels as another type of the wire, so the document points at that type and the name Money is not
         // in it at all.
-        declaring.Add<Money>(new Shape.AsAnother(typeof(MoneyParts)));
+        bookings.Add<Money>(new Shape.AsAnother(typeof(MoneyParts)));
 
-        // A family a rule recognises, which cannot be listed one by one.
-        declaring.Add(
-            type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Amended<>),
-            _ => new Shape.Unwraps(0));
+        // A family a convention recognises, which cannot be listed one by one.
+        bookings.AddShapeSource(new AmendedWireShapes());
 
         // The content of a file, which in an application is whatever its framework calls one.
-        declaring.Add<BoardingPassFile>(new Shape.AsFile());
+        bookings.Add<BoardingPassFile>(new Shape.AsFile());
 
         // One of several forms, told apart by what arrived: the identifier, or the passenger expanded.
-        declaring.Add<PassengerRef>(new Shape.OneOf(new[]
+        bookings.Add<PassengerRef>(new Shape.OneOf(new[]
         {
             new Alternative("id", new Shape.As(Carrier.Guid)),
             new Alternative("expanded", new Shape.AsAnother(typeof(Passenger)))
         }));
 
         // What a segment turns out to be, one fact at a time.
-        declaring.AddKind<Segment, FlightSegment>("flight");
-        declaring.AddKind<Segment, TrainSegment>("train");
+        bookings.AddKind<Segment, FlightSegment>("flight");
+        bookings.AddKind<Segment, TrainSegment>("train");
 
         // The word a value of an enumeration travels under, one fact at a time for the same reason.
-        declaring.AddWord(CabinClass.Economy, "economy");
-        declaring.AddWord(CabinClass.Business, "business");
+        bookings.AddWord(CabinClass.Economy, "economy");
+        bookings.AddWord(CabinClass.Business, "business");
 
         return declaring;
     }
@@ -104,6 +103,22 @@ public sealed record MoneyParts(decimal Amount, string Currency);
 
 /// <summary>A value that may be left out of a change, and travels as the value when it is not.</summary>
 public sealed record Amended<T>(T Value);
+
+/// <summary>
+/// What a value left out of a change travels as, whatever type it wraps: the wrapper disappears and what it
+/// wrapped travels in its place.
+/// </summary>
+/// <remarks>
+/// A convention and not a catalog. Which types are amended is open — any type the API lets a caller leave out —
+/// so there is no list of them to be read through.
+/// </remarks>
+public sealed class AmendedWireShapes : IShapeSource
+{
+    public Shape? GetShape(Type type, ISerializer serializer) =>
+        type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Amended<>)
+            ? new Shape.Unwraps(0)
+            : null;
+}
 
 /// <summary>A boarding pass as it is sent and as it comes back, which an application reads as a file.</summary>
 public sealed class BoardingPassFile;

@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Generic;
 
 namespace IOKode.WireShape;
 
 /// <summary>
-/// Somewhere a written form can be read from without anyone having declared it one by one.
+/// Whatever can be asked the written form of a type: a convention that recognises one, or a place that keeps
+/// the forms somebody already wrote down.
 /// </summary>
 /// <remarks>
 /// Some forms are already said by something else: a converter written as one type to another says it in its own
@@ -15,15 +15,14 @@ namespace IOKode.WireShape;
 /// this is the seam between the two: implement it to turn a convention of your own — a base class, an
 /// attribute, a converter written to a shape — into declarations nobody had to write down.
 /// </para>
+/// <para>
+/// One question and not two. A convention recognises a type when it is put in front of it and has no list
+/// behind it: which <c>Amended&lt;T&gt;</c> exist is not a question anyone can answer, because the argument is
+/// open. A source that does have a list is an <see cref="IShapeCatalog"/> and says so by being one.
+/// </para>
 /// </remarks>
 public interface IShapeSource
 {
     /// <summary>The form of this type, or null where this source has nothing to say about it.</summary>
     Shape? GetShape(Type type, ISerializer serializer);
-
-    /// <summary>
-    /// Every type this source can name, with its form. Empty where a source answers about a type when it is
-    /// asked and cannot be asked to name them all.
-    /// </summary>
-    IReadOnlyDictionary<Type, Shape> GetDeclarations(ISerializer serializer);
 }

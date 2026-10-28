@@ -68,7 +68,7 @@ owns.
 looks like reads the declaration instead of working it out from the type.
 
 ```csharp
-declaring.Add<BookingReference>(new Shape.AsText(Pattern: "^[A-Z]{6}$"));
+bookings.Add<BookingReference>(new Shape.AsText(Pattern: "^[A-Z]{6}$"));
 ```
 
 That is the whole idea. The rest of this documentation is what follows from it: what a form can say, what is

@@ -28,11 +28,12 @@ Here it is declared once and the rest ask:
 
 ```csharp
 var declaring = new WireBuilder();
+Declarer bookings = declaring.GetDeclarer("bookings");
 
-declaring.Add<BookingReference>(new Shape.AsText(Pattern: "^[A-Z]{6}$"));
-declaring.Add<Money>(new Shape.AsAnother(typeof(MoneyParts)));
-declaring.AddKind<Segment, FlightSegment>("flight");
-declaring.AddWord(CabinClass.Economy, "economy");
+bookings.Add<BookingReference>(new Shape.AsText(Pattern: "^[A-Z]{6}$"));
+bookings.Add<Money>(new Shape.AsAnother(typeof(MoneyParts)));
+bookings.AddKind<Segment, FlightSegment>("flight");
+bookings.AddWord(CabinClass.Economy, "economy");
 
 Wire wire = declaring.Build(new JsonSerializerOptionsSerializer(options));
 ```

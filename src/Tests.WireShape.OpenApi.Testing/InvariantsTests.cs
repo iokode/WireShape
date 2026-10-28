@@ -148,7 +148,8 @@ public class InvariantsTests
         }));
 
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
         var wire = declaring.Build(BuildWriter());
 
         // Act
@@ -168,7 +169,8 @@ public class InvariantsTests
         var document = BuildDocument(("Shipping.TrackingCode", new OpenApiSchema {Type = JsonSchemaType.String}));
 
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.AsText(Pattern: "^[A-Z]{2}[0-9]{9}$"));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.AsText(Pattern: "^[A-Z]{2}[0-9]{9}$"));
         var wire = declaring.Build(BuildWriter());
 
         // Act
@@ -193,7 +195,8 @@ public class InvariantsTests
         }));
 
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.AsText(Pattern: "^[A-Z]{2}[0-9]{9}$"));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.AsText(Pattern: "^[A-Z]{2}[0-9]{9}$"));
         var wire = declaring.Build(BuildWriter());
 
         // Act

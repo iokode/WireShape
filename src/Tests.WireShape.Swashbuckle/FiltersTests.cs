@@ -84,8 +84,9 @@ public class FiltersTests
         var schema = new OpenApiSchema();
 
         var declaring = new WireBuilder();
-        declaring.AddWord(ParcelSize.Small, "small");
-        declaring.AddWord(ParcelSize.Large, "large");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddWord(ParcelSize.Small, "small");
+        declarer.AddWord(ParcelSize.Large, "large");
 
         var filter = new EnumerationSchemaFilter(declaring.Build(BuildWriter()));
 
@@ -246,7 +247,8 @@ public class FiltersTests
         // Arrange
         var unwrapping = new Unwrapping();
         var declaring = new WireBuilder();
-        declaring.Add(typeof(List<TrackingCode>), new Shape.Unwraps(0));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(List<TrackingCode>), new Shape.Unwraps(0));
         var wire = declaring.Build(BuildWriter());
 
         var filter = new UnwrapSchemaFilter(wire, unwrapping, GetName);
@@ -280,7 +282,8 @@ public class FiltersTests
     private static Wire BuildWireOfParcels()
     {
         var declaring = new WireBuilder();
-        declaring.AddKindSource(new Parcels());
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKindSource(new Parcels());
         var wire = declaring.Build(BuildWriter());
 
         return wire;

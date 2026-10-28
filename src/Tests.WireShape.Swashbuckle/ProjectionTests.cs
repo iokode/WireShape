@@ -49,7 +49,8 @@ public class ProjectionTests
         // Arrange
         var options = new SwaggerGenOptions();
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
         var wire = declaring.Build(serializer);
 
         // Act
@@ -66,7 +67,8 @@ public class ProjectionTests
         // Arrange
         var options = new SwaggerGenOptions();
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
         var wire = declaring.Build(serializer);
 
         // Act
@@ -86,7 +88,8 @@ public class ProjectionTests
             () => new OpenApiSchema {Type = JsonSchemaType.Integer};
 
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
         var wire = declaring.Build(serializer);
 
         // Act

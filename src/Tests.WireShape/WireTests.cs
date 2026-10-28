@@ -10,7 +10,7 @@ namespace IOKode.WireShape.Tests;
 
 /// <summary>
 /// What a wire answers about the form of a type, and in what order: what was declared of that type one by one,
-/// then what a rule recognises, then what a source can read.
+/// then what a source answers, the first one added before the rest. And who declared it, where anybody did.
 /// </summary>
 public class WireTests
 {
@@ -22,7 +22,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(typeof(Reference), new Shape.AsText(Pattern: "^[A-Z]{3}$"));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(Reference), new Shape.AsText(Pattern: "^[A-Z]{3}$"));
 
         // Act
         var shape = declaring.Build(serializer).GetShape(typeof(Reference));
@@ -38,7 +39,8 @@ public class WireTests
         // Arrange
         var written = new Shape.AsText(Pattern: "^[A-Z]{3}$");
         var declaring = new WireBuilder();
-        declaring.Add<Reference>(written);
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<Reference>(written);
 
         // Act
         var shape = declaring.Build(serializer).GetShape(typeof(Reference));
@@ -52,8 +54,9 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddShapeSource(Reads(typeof(Reference), Carrier.Int64));
-        declaring.Add(typeof(Reference), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddShapeSource(Reads(typeof(Reference), Carrier.Int64));
+        declarer.Add(typeof(Reference), new Shape.As(Carrier.String));
 
         // Act
         var shape = declaring.Build(serializer).GetShape(typeof(Reference));
@@ -67,10 +70,11 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add<Reference>(new Shape.As(Carrier.Int64));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<Reference>(new Shape.As(Carrier.Int64));
 
         // Act
-        var declaringAnother = () => declaring.Add<Reference>(new Shape.AsText());
+        var declaringAnother = () => declarer.Add<Reference>(new Shape.AsText());
 
         // Assert
         var refused = Assert.Throws<InvalidOperationException>(declaringAnother);
@@ -86,8 +90,9 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add<Reference>(new Shape.As(Carrier.Int64));
-        declaring.Add<Reference>(new Shape.As(Carrier.Int64));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<Reference>(new Shape.As(Carrier.Int64));
+        declarer.Add<Reference>(new Shape.As(Carrier.Int64));
 
         // Act
         var shape = declaring.Build(serializer).GetShape(typeof(Reference));
@@ -97,11 +102,12 @@ public class WireTests
     }
 
     [Fact]
-    public void WhatARuleRecognises_ShouldBeAnswered()
+    public void WhatAConventionRecognises_ShouldBeAnswered()
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(type => type == typeof(Reference), _ => new Shape.Unwraps(0));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddShapeSource(Recognises(typeof(Reference), new Shape.Unwraps(0)));
 
         // Act
         var shape = declaring.Build(serializer).GetShape(typeof(Reference));
@@ -115,7 +121,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddShapeSource(Reads(typeof(Reference), Carrier.Int64));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddShapeSource(Reads(typeof(Reference), Carrier.Int64));
 
         // Act
         var shape = declaring.Build(serializer).GetShape(typeof(Reference));
@@ -129,8 +136,9 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddShapeSource(Reads(typeof(Reference), Carrier.Int64));
-        declaring.AddShapeSource(Reads(typeof(Reference), Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddShapeSource(Reads(typeof(Reference), Carrier.Int64));
+        declarer.AddShapeSource(Reads(typeof(Reference), Carrier.String));
 
         // Act
         var shape = declaring.Build(serializer).GetShape(typeof(Reference));
@@ -153,12 +161,13 @@ public class WireTests
     }
 
     [Fact]
-    public void WhatARuleRecognises_ShouldNotBeNamedAmongTheDeclarations()
+    public void WhatAConventionRecognises_ShouldNotBeNamedAmongTheDeclarations()
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add(type => type == typeof(Reference), _ => new Shape.Unwraps(0));
-        declaring.Add(typeof(Count), new Shape.As(Carrier.Int32));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddShapeSource(Recognises(typeof(Reference), new Shape.Unwraps(0)));
+        declarer.Add(typeof(Count), new Shape.As(Carrier.Int32));
 
         // Act
         var declared = declaring.Build(serializer).GetDeclaredShapes();
@@ -169,18 +178,131 @@ public class WireTests
     }
 
     [Fact]
-    public void WhatWasDeclaredOfAType_ShouldBeNamedAmongTheDeclarationsBeforeWhatASourceReads()
+    public void WhatWasDeclaredOfAType_ShouldBeNamedAmongTheDeclarationsBeforeWhatACatalogReads()
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddShapeSource(Reads(typeof(Reference), Carrier.Int64));
-        declaring.Add(typeof(Reference), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddShapeSource(Reads(typeof(Reference), Carrier.Int64));
+        declarer.Add(typeof(Reference), new Shape.As(Carrier.String));
 
         // Act
         var declared = declaring.Build(serializer).GetDeclaredShapes();
 
         // Assert
-        Assert.Equal(typeof(string), Assert.IsType<Shape.As>(declared[typeof(Reference)]).By.Type);
+        Assert.Equal(typeof(string), Assert.IsType<Shape.As>(declared[typeof(Reference)].Shape).By.Type);
+    }
+
+    [Fact]
+    public void WhatADeclarerDeclaredOfAType_ShouldBeNamedAfterIt()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+        declaring.GetDeclarer("dispatch").Add(typeof(Reference), new Shape.As(Carrier.String));
+
+        // Act
+        var wire = declaring.Build(serializer);
+
+        // Assert
+        Assert.Equal("dispatch", wire.GetDeclarerOf(typeof(Reference)));
+        Assert.Equal("dispatch", wire.GetDeclaredShapes()[typeof(Reference)].Declarer);
+    }
+
+    [Fact]
+    public void WhatACatalogNames_ShouldBeNamedAfterWhoeverAddedIt()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+        declaring.GetDeclarer("tracking").AddShapeSource(Reads(typeof(Reference), Carrier.Int64));
+
+        // Act
+        var wire = declaring.Build(serializer);
+
+        // Assert
+        Assert.Equal("tracking", wire.GetDeclarerOf(typeof(Reference)));
+    }
+
+    /// <summary>
+    /// A convention declares the form of a family it did not name, so naming its types after whoever wrote it
+    /// would say that the author of a convention declared somebody else's type.
+    /// </summary>
+    [Fact]
+    public void WhatOnlyAConventionRecognises_ShouldHaveNoDeclarer()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+        declaring.GetDeclarer("dispatch").AddShapeSource(Recognises(typeof(Reference), new Shape.Unwraps(0)));
+
+        // Act
+        var wire = declaring.Build(serializer);
+
+        // Assert
+        Assert.NotNull(wire.GetShape(typeof(Reference)));
+        Assert.Null(wire.GetDeclarerOf(typeof(Reference)));
+    }
+
+    [Fact]
+    public void WhatNobodyDeclared_ShouldHaveNoDeclarer()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+
+        // Act
+        var wire = declaring.Build(serializer);
+
+        // Assert
+        Assert.Null(wire.GetDeclarerOf(typeof(Reference)));
+    }
+
+    [Fact]
+    public void TwoDeclarersDisagreeingAboutAType_ShouldBeRefusedNamingBoth()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+        declaring.GetDeclarer("dispatch").Add(typeof(Reference), new Shape.As(Carrier.String));
+
+        // Act
+        var refused = Assert.Throws<InvalidOperationException>(() =>
+            declaring.GetDeclarer("tracking").Add(typeof(Reference), new Shape.As(Carrier.Int64)));
+
+        // Assert
+        Assert.Contains("dispatch", refused.Message);
+        Assert.Contains("tracking", refused.Message);
+    }
+
+    /// <summary>
+    /// Saying the same form again is agreeing with it, and whoever agrees did not declare it: taking the name
+    /// of the last to speak would make it depend on the order the parts of a wire were composed in.
+    /// </summary>
+    [Fact]
+    public void TwoDeclarersAgreeingAboutAType_ShouldKeepTheNameOfTheFirst()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+        declaring.GetDeclarer("dispatch").Add(typeof(Reference), new Shape.As(Carrier.String));
+        declaring.GetDeclarer("tracking").Add(typeof(Reference), new Shape.As(Carrier.String));
+
+        // Act
+        var wire = declaring.Build(serializer);
+
+        // Assert
+        Assert.Equal("dispatch", wire.GetDeclarerOf(typeof(Reference)));
+    }
+
+    [Fact]
+    public void TwoDeclarersDisagreeingAboutAKind_ShouldBeRefusedNamingBoth()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+        declaring.GetDeclarer("dispatch").AddKind<Parcel, Envelope>("envelope");
+
+        // Act
+        var refused = Assert.Throws<InvalidOperationException>(() =>
+            declaring.GetDeclarer("tracking").AddKind<Parcel, Envelope>("packet"));
+
+        // Assert
+        Assert.Contains("dispatch", refused.Message);
+        Assert.Contains("tracking", refused.Message);
     }
 
     /// <summary>
@@ -193,7 +315,8 @@ public class WireTests
         // Arrange
         var declared = new[] {new Member("code", typeof(string), IsOptional: false)};
         var declaring = new WireBuilder();
-        declaring.Add<Count>(new Shape.Members(declared));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<Count>(new Shape.Members(declared));
 
         // Act
         var members = declaring.Build(serializer).GetMembers(typeof(Count));
@@ -225,10 +348,11 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsOptional: false)}));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsOptional: false)}));
 
         // Act
-        declaring.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsOptional: false)}));
+        declarer.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsOptional: false)}));
 
         // Assert
         var members = declaring.Build(serializer).GetMembers(typeof(Count))!;
@@ -240,10 +364,11 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsOptional: false)}));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsOptional: false)}));
 
         // Act
-        var declaringAnother = () => declaring.Add<Count>(
+        var declaringAnother = () => declarer.Add<Count>(
             new Shape.Members(new[] {new Member("reference", typeof(string), IsOptional: false)}));
 
         // Assert
@@ -255,7 +380,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddKind<Parcel, Envelope>("envelope");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKind<Parcel, Envelope>("envelope");
 
         // Act
         var kinds = declaring.Build(serializer).GetKinds(typeof(Parcel));
@@ -271,10 +397,11 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddKind<Parcel, Envelope>("envelope");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKind<Parcel, Envelope>("envelope");
 
         // Act
-        var declaringAnother = () => declaring.AddKind<Parcel, Envelope>("env");
+        var declaringAnother = () => declarer.AddKind<Parcel, Envelope>("env");
 
         // Assert
         var refused = Assert.Throws<InvalidOperationException>(declaringAnother);
@@ -290,10 +417,11 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddKind<Parcel, Envelope>("box");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKind<Parcel, Envelope>("box");
 
         // Act
-        var declaringAnother = () => declaring.AddKind<Parcel, Pallet>("box");
+        var declaringAnother = () => declarer.AddKind<Parcel, Pallet>("box");
 
         // Assert
         var refused = Assert.Throws<InvalidOperationException>(declaringAnother);
@@ -305,8 +433,9 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddKind<Parcel, Envelope>("envelope");
-        declaring.AddKind<Parcel, Envelope>("envelope");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKind<Parcel, Envelope>("envelope");
+        declarer.AddKind<Parcel, Envelope>("envelope");
 
         // Act
         var kinds = declaring.Build(serializer).GetKinds(typeof(Parcel));
@@ -320,8 +449,9 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddKind(new HierarchyKind(typeof(Parcel), typeof(Envelope), "flat"));
-        declaring.AddKind(new HierarchyKind(typeof(Shipment), typeof(Express), "flat"));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKind(new HierarchyKind(typeof(Parcel), typeof(Envelope), "flat"));
+        declarer.AddKind(new HierarchyKind(typeof(Shipment), typeof(Express), "flat"));
 
         // Act
         var kinds = declaring.Build(serializer).GetKinds(typeof(Shipment));
@@ -335,8 +465,9 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddKind(new HierarchyKind(typeof(Parcel), typeof(Parcel), "parcel"));
-        declaring.AddKind<Parcel, Envelope>("envelope");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKind(new HierarchyKind(typeof(Parcel), typeof(Parcel), "parcel"));
+        declarer.AddKind<Parcel, Envelope>("envelope");
 
         // Act
         var kinds = declaring.Build(serializer).GetKinds(typeof(Parcel));
@@ -369,7 +500,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddKind<Shipment, Express>("express-delivery");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKind<Shipment, Express>("express-delivery");
 
         // Act
         var kinds = declaring.Build(serializer).GetKinds(typeof(Shipment));
@@ -385,7 +517,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddKindSource(new Parcels());
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKindSource(new Parcels());
 
         // Act
         var kinds = declaring.Build(serializer).GetKinds(typeof(Parcel));
@@ -399,8 +532,9 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddKindSource(new Parcels());
-        declaring.AddKind<Shipment, Express>("express");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKindSource(new Parcels());
+        declarer.AddKind<Shipment, Express>("express");
 
         // Act
         var declared = declaring.Build(serializer).GetDeclaredKinds();
@@ -433,7 +567,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddWord(CarrierService.NextDay, "next-day");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddWord(CarrierService.NextDay, "next-day");
 
         // Act
         var written = declaring.Build(serializer).GetValueForm(typeof(CarrierService), CarrierService.NextDay);
@@ -451,7 +586,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddWord(CarrierService.NextDay, "next-day");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddWord(CarrierService.NextDay, "next-day");
 
         // Act
         var written = declaring.Build(serializer).GetValueForm(typeof(CarrierService), CarrierService.Economy);
@@ -465,10 +601,11 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddWord(CarrierService.NextDay, "next-day");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddWord(CarrierService.NextDay, "next-day");
 
         // Act
-        var declaringAnother = () => declaring.AddWord(CarrierService.NextDay, "nextDay");
+        var declaringAnother = () => declarer.AddWord(CarrierService.NextDay, "nextDay");
 
         // Assert
         var refused = Assert.Throws<InvalidOperationException>(declaringAnother);
@@ -480,10 +617,11 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddWord(CarrierService.NextDay, "quick");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddWord(CarrierService.NextDay, "quick");
 
         // Act
-        var declaringAnother = () => declaring.AddWord(CarrierService.Economy, "quick");
+        var declaringAnother = () => declarer.AddWord(CarrierService.Economy, "quick");
 
         // Assert
         var refused = Assert.Throws<InvalidOperationException>(declaringAnother);
@@ -495,8 +633,9 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddWord(CarrierService.NextDay, "quick");
-        declaring.AddWord(ParcelSize.Small, "quick");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddWord(CarrierService.NextDay, "quick");
+        declarer.AddWord(ParcelSize.Small, "quick");
 
         // Act
         var written = declaring.Build(serializer).GetValueForm(typeof(ParcelSize), ParcelSize.Small);
@@ -510,7 +649,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddWordSource(new LowerCasedWords());
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddWordSource(new LowerCasedWords());
 
         // Act
         var written = declaring.Build(serializer).GetValueForm(typeof(CarrierService), CarrierService.NextDay);
@@ -524,7 +664,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add<ParcelSize>(new Shape.AsText());
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<ParcelSize>(new Shape.AsText());
 
         // Act
         var byName = declaring.Build(serializer).TravelsByName(typeof(ParcelSize));
@@ -542,7 +683,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.AddWord(CarrierService.NextDay, "next-day");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddWord(CarrierService.NextDay, "next-day");
 
         // Act
         var byName = declaring.Build(serializer).TravelsByName(typeof(CarrierService));
@@ -560,8 +702,9 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add<CarrierService>(new Shape.As(Carrier.Int32));
-        declaring.AddWord(CarrierService.NextDay, "next-day");
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<CarrierService>(new Shape.As(Carrier.Int32));
+        declarer.AddWord(CarrierService.NextDay, "next-day");
 
         // Act
         var building = () => declaring.Build(serializer);
@@ -580,13 +723,14 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add<Reference>(new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<Reference>(new Shape.As(Carrier.String));
 
         var wire = declaring.Build(serializer);
 
         // Act
-        declaring.Add<Count>(new Shape.As(Carrier.Int32));
-        declaring.AddKind<Parcel, Envelope>("envelope");
+        declarer.Add<Count>(new Shape.As(Carrier.Int32));
+        declarer.AddKind<Parcel, Envelope>("envelope");
 
         // Assert
         Assert.Null(wire.GetShape(typeof(Count)));
@@ -600,7 +744,8 @@ public class WireTests
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.Add<Reference>(new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add<Reference>(new Shape.As(Carrier.String));
 
         // Act
         var one = declaring.Build(serializer);
@@ -613,6 +758,9 @@ public class WireTests
 
     private static IShapeSource Reads(Type type, Carrier carrier) => new Source(type, carrier);
 
+    /// <summary>A convention: it recognises one type and has no list it could be read through.</summary>
+    private static IShapeSource Recognises(Type type, Shape shape) => new Convention(type, shape);
+
     /// <summary>What a wire whose words are the names of the members, cut down, answers of each value.</summary>
     private sealed class LowerCasedWords : IEnumerationSource
     {
@@ -620,13 +768,18 @@ public class WireTests
             Enum.GetName(enumType, value)?.ToLowerInvariant();
     }
 
-    private sealed class Source(Type type, Carrier carrier) : IShapeSource
+    private sealed class Source(Type type, Carrier carrier) : IShapeCatalog
     {
         public Shape? GetShape(Type asked, ISerializer serializer) =>
             asked == type ? new Shape.As(carrier) : null;
 
         public IReadOnlyDictionary<Type, Shape> GetDeclarations(ISerializer serializer) =>
             new Dictionary<Type, Shape> {[type] = new Shape.As(carrier)};
+    }
+
+    private sealed class Convention(Type type, Shape shape) : IShapeSource
+    {
+        public Shape? GetShape(Type asked, ISerializer serializer) => asked == type ? shape : null;
     }
 
     private readonly record struct Reference(string Value);

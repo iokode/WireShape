@@ -64,7 +64,7 @@ public static class Invariants
 
     /// <summary>
     /// No schema offers a member that never travels. Which member that is depends on what the wire is made of,
-    /// so whoever runs this says which one, there being no way to ask a rule what it recognises.
+    /// so whoever runs this says which one, there being no way to ask a convention what it recognises.
     /// </summary>
     public static IReadOnlyCollection<string> FindSchemasCarrying(
         string name,
@@ -129,8 +129,10 @@ public static class Invariants
         var schemas = Documents.GetSchemas(document);
         var wrong = new List<string>();
 
-        foreach (var (type, shape) in written.GetDeclaredShapes())
+        foreach (var (type, declaration) in written.GetDeclaredShapes())
         {
+            var shape = declaration.Shape;
+
             if (shape.Carrier is not {KeepsItsName: true} carrier)
             {
                 continue;

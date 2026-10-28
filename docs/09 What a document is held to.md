@@ -30,9 +30,9 @@ residue of something that stopped being referenced or a type that walked into th
 does not have leaves whoever reads it with a member they cannot know the form of.
 
 **`FindSchemasCarrying`** — no schema offers a member that never travels. Which member that is depends on what the
-wire is made of, so whoever runs it says which one: a rule can be asked whether it recognises a type, never to
-name the types it recognises, so the family `Amended<>` belongs to cannot be enumerated and the member it would
-have brought with it is named here instead.
+wire is made of, so whoever runs it says which one: a convention can be asked whether it recognises a type, never
+to name the types it recognises, so the family `Amended<>` belongs to cannot be enumerated and the member it
+would have brought with it is named here instead.
 
 **`FindEnumerationsDescribedOtherwise`** — an enumeration is described as the wire writes it. Whether `CabinClass`
 travels as a word or as a number is asked of the wire, which writes a value to find out, because what decides it

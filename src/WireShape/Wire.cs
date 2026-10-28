@@ -28,22 +28,20 @@ namespace IOKode.WireShape;
 public sealed class Wire
 {
     private readonly ISerializer serializer;
-    private readonly IReadOnlyDictionary<Type, Shape> byType;
-    private readonly IReadOnlyList<(Func<Type, bool> Matches, Func<Type, Shape> Shape)> byRule;
-    private readonly IReadOnlyList<IShapeSource> shapeSources;
+    private readonly IReadOnlyDictionary<Type, Declaration> byType;
+    private readonly IReadOnlyList<(string Declarer, IShapeSource Source)> shapeSources;
     private readonly IReadOnlyDictionary<Type, IReadOnlyDictionary<Type, string>> byBase;
     private readonly IReadOnlyList<IHierarchySource> kindSources;
     private readonly IReadOnlyDictionary<Type, IReadOnlyDictionary<object, string>> byEnumeration;
     private readonly IReadOnlyList<IEnumerationSource> wordSources;
 
-    private readonly IReadOnlyDictionary<Type, Shape> declaredShapes;
+    private readonly IReadOnlyDictionary<Type, Declaration> declaredShapes;
     private readonly IReadOnlyCollection<HierarchyKind> declaredKinds;
 
     internal Wire(
         ISerializer serializer,
-        IReadOnlyDictionary<Type, Shape> byType,
-        IReadOnlyList<(Func<Type, bool> Matches, Func<Type, Shape> Shape)> byRule,
-        IReadOnlyList<IShapeSource> shapeSources,
+        IReadOnlyDictionary<Type, Declaration> byType,
+        IReadOnlyList<(string Declarer, IShapeSource Source)> shapeSources,
         IReadOnlyDictionary<Type, IReadOnlyDictionary<Type, string>> byBase,
         IReadOnlyList<IHierarchySource> kindSources,
         IReadOnlyDictionary<Type, IReadOnlyDictionary<object, string>> byEnumeration,
@@ -51,7 +49,6 @@ public sealed class Wire
     {
         this.serializer = serializer;
         this.byType = byType;
-        this.byRule = byRule;
         this.shapeSources = shapeSources;
         this.byBase = byBase;
         this.kindSources = kindSources;
@@ -70,29 +67,36 @@ public sealed class Wire
     {
         if (byType.TryGetValue(type, out var declared))
         {
-            return declared;
-        }
-
-        var rule = byRule.FirstOrDefault(candidate => candidate.Matches(type));
-        if (rule.Shape != null)
-        {
-            return rule.Shape(type);
+            return declared.Shape;
         }
 
         return shapeSources
-            .Select(source => source.GetShape(type, serializer))
+            .Select(source => source.Source.GetShape(type, serializer))
             .FirstOrDefault(shape => shape != null);
     }
 
     /// <summary>
-    /// Every type whose written form this wire knows, with that form: the ones declared one by one and the ones
-    /// a source can name. Read when the wire was made, so it is the same answer however often it is asked.
+    /// Every type whose written form this wire knows, with that form and with who declared it: the ones
+    /// declared one by one and the ones a catalog can name. Read when the wire was made, so it is the same
+    /// answer however often it is asked.
     /// </summary>
     /// <remarks>
-    /// A family declared by a rule is not here. A rule recognises a type when it is asked about one, and cannot
-    /// be asked to name them all, so whoever needs those has to ask type by type.
+    /// What only a convention recognises is not here. A convention recognises a type when it is asked about one
+    /// and cannot be asked to name them all, so whoever needs those has to ask type by type.
     /// </remarks>
-    public IReadOnlyDictionary<Type, Shape> GetDeclaredShapes() => declaredShapes;
+    public IReadOnlyDictionary<Type, Declaration> GetDeclaredShapes() => declaredShapes;
+
+    /// <summary>
+    /// The name of whoever declared the form of this type, or null where nobody declared it of that type: one
+    /// written as it stands, or one that only a convention recognises.
+    /// </summary>
+    /// <remarks>
+    /// Asked of the type and not of the form. A convention declares the form of a family it did not name, so
+    /// attributing its types to whoever wrote it would say that the author of a convention declared somebody
+    /// else's type — which is the one thing a name of this kind must not say.
+    /// </remarks>
+    public string? GetDeclarerOf(Type type) =>
+        declaredShapes.TryGetValue(type, out var declared) ? declared.Declarer : null;
 
     /// <summary>
     /// The members of a type, named as they travel: what a declaration says of it, or what whoever writes
@@ -463,23 +467,30 @@ public sealed class Wire
     private static bool IsWrittenAsItIs(Type type) =>
         Carrier.Of(type) != null || type == typeof(object);
 
-    private IReadOnlyDictionary<Type, Shape> NameEveryShape()
+    private IReadOnlyDictionary<Type, Declaration> NameEveryShape()
     {
-        var declared = new Dictionary<Type, Shape>();
+        var declared = new Dictionary<Type, Declaration>();
 
-        foreach (var source in shapeSources)
+        // Only what has a list behind it. A convention answers about a type when it is asked and has none, so
+        // there is nothing of it to walk here.
+        foreach (var (declarer, source) in shapeSources)
         {
-            foreach (var (type, shape) in source.GetDeclarations(serializer))
+            if (source is not IShapeCatalog catalog)
             {
-                declared[type] = shape;
+                continue;
+            }
+
+            foreach (var (type, shape) in catalog.GetDeclarations(serializer))
+            {
+                declared[type] = new Declaration(shape, declarer);
             }
         }
 
-        // Last, because a declaration of its own says more than a source does: that a string is an email
+        // Last, because a declaration of its own says more than a catalog does: that a string is an email
         // address is not something the converter of one ever said.
-        foreach (var (type, shape) in byType)
+        foreach (var (type, declaration) in byType)
         {
-            declared[type] = shape;
+            declared[type] = declaration;
         }
 
         return declared;

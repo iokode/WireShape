@@ -48,9 +48,9 @@ public static class Schemas
     {
         return wire.GetDeclaredShapes()
             .Where(declaration => !declaration.Key.IsEnum)
-            .Where(declaration =>
-                declaration.Value is Shape.As or Shape.AsText or Shape.AsFile or Shape.AsAnother or Shape.OneOf)
-            .Select(declaration => (declaration.Key, declaration.Value));
+            .Where(declaration => declaration.Value.Shape is
+                Shape.As or Shape.AsText or Shape.AsFile or Shape.AsAnother or Shape.OneOf)
+            .Select(declaration => (declaration.Key, declaration.Value.Shape));
     }
 
     /// <summary>The types that get a schema of their own because another type of the wire travels as them.</summary>

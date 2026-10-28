@@ -55,7 +55,8 @@ public class WireStructuresTests
     {
         // Arrange
         var declaring = BuildDeclaration();
-        declaring.Add(typeof(byte[]), new Shape.AsFile());
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(byte[]), new Shape.AsFile());
         var wire = declaring.Build(BuildWriter());
 
         // Act
@@ -74,7 +75,8 @@ public class WireStructuresTests
     {
         // Arrange
         var declaring = BuildDeclaration();
-        declaring.Add(typeof(Route), new Shape.OneOf(new[]
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(Route), new Shape.OneOf(new[]
         {
             new Alternative("name", new Shape.AsText()),
             new Alternative("consigned", new Shape.AsAnother(typeof(Consignment)))
@@ -221,7 +223,8 @@ public class WireStructuresTests
     {
         // Arrange
         var declaring = BuildDeclaration();
-        declaring.Add(typeof(IReadOnlyList<TrackingCode>), new Shape.Unwraps(0));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(IReadOnlyList<TrackingCode>), new Shape.Unwraps(0));
         var wire = declaring.Build(BuildWriter());
 
         // Act
@@ -244,7 +247,8 @@ public class WireStructuresTests
     {
         // Arrange
         var declaring = BuildDeclaration();
-        declaring.Add(typeof(IReadOnlyList<string>), new Shape.Unwraps(0));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(IReadOnlyList<string>), new Shape.Unwraps(0));
         var wire = declaring.Build(BuildWriter());
 
         // Act
@@ -266,9 +270,10 @@ public class WireStructuresTests
     private static WireBuilder BuildDeclaration()
     {
         var declaring = new WireBuilder();
-        declaring.AddKindSource(new Parcels());
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
-        declaring.Add(typeof(DispatchedOn), new Shape.As(Carrier.DateOnly));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddKindSource(new Parcels());
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        declarer.Add(typeof(DispatchedOn), new Shape.As(Carrier.DateOnly));
 
         return declaring;
     }

@@ -26,40 +26,41 @@ nobody can be asked about. Everything else is answered by whoever writes the wir
 ```csharp
 var declaring = new WireBuilder();
 
+// Who declares. Everything declared through it is declared by it, and a wire of several parts has one each.
+var bookings = declaring.GetDeclarer("bookings");
+
 // Values a converter of their own writes, which is why they are declared at all.
-declaring.Add<BookingReference>(new Shape.AsText(Pattern: "^[A-Z]{6}$"));
-declaring.Add<PassengerId>(new Shape.As(Carrier.Guid));
-declaring.Add<FlightDuration>(new Shape.As(Carrier.Int64));
-declaring.Add<DepartsOn>(new Shape.As(Carrier.DateOnly));
+bookings.Add<BookingReference>(new Shape.AsText(Pattern: "^[A-Z]{6}$"));
+bookings.Add<PassengerId>(new Shape.As(Carrier.Guid));
+bookings.Add<FlightDuration>(new Shape.As(Carrier.Int64));
+bookings.Add<DepartsOn>(new Shape.As(Carrier.DateOnly));
 
 // A moment in time of its own: the reader's language has a kind for it, so no name of ours goes over it.
-declaring.Add<BoardingAt>(new Shape.AsText(Format: "date-time", IsSelfExplanatory: true));
+bookings.Add<BoardingAt>(new Shape.AsText(Format: "date-time", IsSelfExplanatory: true));
 
 // It travels as another type of the wire, so the document points at that type and the name Money is not in it.
-declaring.Add<Money>(new Shape.AsAnother(typeof(MoneyParts)));
+bookings.Add<Money>(new Shape.AsAnother(typeof(MoneyParts)));
 
-// A family a rule recognises, which cannot be listed one by one.
-declaring.Add(
-    type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Amended<>),
-    _ => new Shape.Unwraps(0));
+// A family a convention recognises, which cannot be listed one by one.
+bookings.AddShapeSource(new AmendedWireShapes());
 
 // The content of a file, which in an application is whatever its framework calls one.
-declaring.Add<BoardingPassFile>(new Shape.AsFile());
+bookings.Add<BoardingPassFile>(new Shape.AsFile());
 
 // One of several forms, told apart by what arrived: the identifier, or the passenger expanded.
-declaring.Add<PassengerRef>(new Shape.OneOf(new[]
+bookings.Add<PassengerRef>(new Shape.OneOf(new[]
 {
     new Alternative("id", new Shape.As(Carrier.Guid)),
     new Alternative("expanded", new Shape.AsAnother(typeof(Passenger)))
 }));
 
 // What a segment turns out to be, one fact at a time.
-declaring.AddKind<Segment, FlightSegment>("flight");
-declaring.AddKind<Segment, TrainSegment>("train");
+bookings.AddKind<Segment, FlightSegment>("flight");
+bookings.AddKind<Segment, TrainSegment>("train");
 
 // The word a value of an enumeration travels under, one fact at a time for the same reason.
-declaring.AddWord(CabinClass.Economy, "economy");
-declaring.AddWord(CabinClass.Business, "business");
+bookings.AddWord(CabinClass.Economy, "economy");
+bookings.AddWord(CabinClass.Business, "business");
 ```
 
 Read it once more by what each line is for, because the whole of this library is in that list:

@@ -94,7 +94,7 @@ public abstract record Shape
     /// <para>
     /// Whether the alternatives can be told apart from one another is not checked here and cannot be: two texts
     /// whose patterns never overlap are told apart, two objects with different members are told apart, and
-    /// deciding that in general would need to intersect patterns and weigh which members are required. A rule
+    /// deciding that in general would need to intersect patterns and weigh which members are required. A check
     /// that got it wrong would refuse what a reader can read perfectly well, so it is left to whoever declares
     /// it.
     /// </para>

@@ -35,8 +35,8 @@ public abstract record Structure
     /// </summary>
     /// <remarks>
     /// A wrapper is one of these and not a case of its own. How a type came to come out as another — a carrier
-    /// named in the declaration, or a rule that reads one of its own arguments — is a fact of the declaring, and
-    /// what travels is the same either way: that other type, in its place.
+    /// named in the declaration, or a wrapper leaving one of its own arguments behind — is a fact of the
+    /// declaring, and what travels is the same either way: that other type, in its place.
     /// </remarks>
     /// <param name="By">The type that travels where this one was.</param>
     public sealed record Carried(Type By, bool NeedsItsOwnName) : Structure;

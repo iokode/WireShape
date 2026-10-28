@@ -127,7 +127,8 @@ public class ApiSurfaceTests
         var serializer = new JsonSerializerOptionsSerializer(options);
 
         var declaring = new WireBuilder();
-        declaring.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
+        var declarer = declaring.GetDeclarer("application");
+        declarer.Add(typeof(TrackingCode), new Shape.As(Carrier.String));
         var wire = declaring.Build(serializer);
 
         // Taught first: a value the binder cannot read from text is taken for something with members, and what

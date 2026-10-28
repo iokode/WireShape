@@ -88,7 +88,7 @@ headers — so a client written from that answer would send those six as JSON in
 The declaration belongs here and not in the base package, which neither references ASP.NET Core nor should:
 
 ```csharp
-declaring.Add<IFormFile>(new Shape.AsFile());
+bookings.Add<IFormFile>(new Shape.AsFile());
 ```
 
 Whether the call carries it as a part of a form is a fact of the call and stays there: `IsMultipart` on the
@@ -111,7 +111,7 @@ So of the booking API: `BookingReference` is `Carried(string, needs its own name
 kinds, `CabinClass` an `Enumeration` by word, `PassengerRef` a `OneOf` of two, and a boarding pass a `File`.
 
 **A wrapper that disappears is not a case of its own.** How a type came to come out as another — a carrier named
-in the declaration, or a rule that reads one of its own arguments — is a fact of the declaring, and what travels
+in the declaration, or a wrapper leaving one of its own arguments behind — is a fact of the declaring, and what travels
 is the same either way: that other type, in its place. A model that said which of the two it had been would be
 carrying something about how it was written down, and this one carries what travels.
 
