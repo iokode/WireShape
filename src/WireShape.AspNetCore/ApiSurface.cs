@@ -71,7 +71,6 @@ public sealed class ApiSurface(
         return new ApiAction
         {
             Method = description.HttpMethod ?? "GET",
-
             Route = "/" + description.RelativePath,
             Controller = action.ControllerName,
             MethodName = MethodNameOf(action),
@@ -163,5 +162,4 @@ public sealed class ApiSurface(
         return underlying.IsPrimitive || underlying.IsEnum || underlying == typeof(string) ||
                underlying == typeof(Guid) || underlying == typeof(decimal) || underlying == typeof(DateTime);
     }
-
 }
