@@ -81,14 +81,14 @@ public sealed class Wire
     /// answer however often it is asked.
     /// </summary>
     /// <remarks>
-    /// What only a convention recognises is not here. A convention recognises a type when it is asked about one
+    /// What only a convention recognizes is not here. A convention recognizes a type when it is asked about one
     /// and cannot be asked to name them all, so whoever needs those has to ask type by type.
     /// </remarks>
     public IReadOnlyDictionary<Type, Declaration> GetDeclaredShapes() => declaredShapes;
 
     /// <summary>
     /// The name of whoever declared the form of this type, or null where nobody declared it of that type: one
-    /// written as it stands, or one that only a convention recognises.
+    /// written as it stands, or one that only a convention recognizes.
     /// </summary>
     /// <remarks>
     /// Asked of the type and not of the form. A convention declares the form of a family it did not name, so

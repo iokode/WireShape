@@ -9,7 +9,7 @@ namespace IOKode.WireShape;
 /// <remarks>
 /// The difference is not of convenience. What a catalog names is among the declarations of a wire, which is what
 /// everything that walks them reads — the type descriptors, the schemas of a document — so those see it without
-/// anybody mentioning it first. What only a convention recognises is not there, and is answered when something
+/// anybody mentioning it first. What only a convention recognizes is not there, and is answered when something
 /// asks and not before.
 /// <para>
 /// Being one is therefore a statement about the source and not a spare method: a place that keeps forms

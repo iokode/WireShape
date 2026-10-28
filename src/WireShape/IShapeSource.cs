@@ -3,7 +3,7 @@ using System;
 namespace IOKode.WireShape;
 
 /// <summary>
-/// Whatever can be asked the written form of a type: a convention that recognises one, or a place that keeps
+/// Whatever can be asked the written form of a type: a convention that recognizes one, or a place that keeps
 /// the forms somebody already wrote down.
 /// </summary>
 /// <remarks>
@@ -16,7 +16,7 @@ namespace IOKode.WireShape;
 /// attribute, a converter written to a shape — into declarations nobody had to write down.
 /// </para>
 /// <para>
-/// One question and not two. A convention recognises a type when it is put in front of it and has no list
+/// One question and not two. A convention recognizes a type when it is put in front of it and has no list
 /// behind it: which <c>Amended&lt;T&gt;</c> exist is not a question anyone can answer, because the argument is
 /// open. A source that does have a list is an <see cref="IShapeCatalog"/> and says so by being one.
 /// </para>

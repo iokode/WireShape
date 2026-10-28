@@ -38,7 +38,7 @@ public static class Flights
         // in it at all.
         bookings.Add<Money>(new Shape.AsAnother(typeof(MoneyParts)));
 
-        // A family a convention recognises, which cannot be listed one by one.
+        // A family a convention recognizes, which cannot be listed one by one.
         bookings.AddShapeSource(new AmendedWireShapes());
 
         // The content of a file, which in an application is whatever its framework calls one.

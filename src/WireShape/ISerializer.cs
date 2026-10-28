@@ -47,7 +47,7 @@ public interface ISerializer
     /// <param name="carrier">The type it travels as.</param>
     object? WriteAsCarrier(Type valueType, Type carrier, object? value);
 
-    /// <summary>The declared value back, from the value it travelled as.</summary>
+    /// <summary>The declared value back, from the value it traveled as.</summary>
     /// <param name="valueType">The type as it was declared.</param>
     /// <param name="carrier">The type it travels as.</param>
     object? ReadFromCarrier(Type valueType, Type carrier, object? carried);

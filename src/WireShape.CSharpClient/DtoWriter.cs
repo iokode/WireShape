@@ -8,7 +8,7 @@ namespace IOKode.WireShape.CSharpClient;
 
 /// <summary>
 /// Writes the types a client carries. They are what travels and nothing else: no rule of their own to keep, no
-/// behaviour, no relation beyond the one a discriminator tells apart. What comes back has already been checked
+/// behavior, no relation beyond the one a discriminator tells apart. What comes back has already been checked
 /// by whoever sent it.
 /// </summary>
 public sealed class DtoWriter(ApiModel model, TypeNames names)

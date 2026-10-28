@@ -102,12 +102,12 @@ public class WireTests
     }
 
     [Fact]
-    public void WhatAConventionRecognises_ShouldBeAnswered()
+    public void WhatAConventionRecognizes_ShouldBeAnswered()
     {
         // Arrange
         var declaring = new WireBuilder();
         var declarer = declaring.GetDeclarer("application");
-        declarer.AddShapeSource(Recognises(typeof(Reference), new Shape.Unwraps(0)));
+        declarer.AddShapeSource(Recognizes(typeof(Reference), new Shape.Unwraps(0)));
 
         // Act
         var shape = declaring.Build(serializer).GetShape(typeof(Reference));
@@ -161,12 +161,12 @@ public class WireTests
     }
 
     [Fact]
-    public void WhatAConventionRecognises_ShouldNotBeNamedAmongTheDeclarations()
+    public void WhatAConventionRecognizes_ShouldNotBeNamedAmongTheDeclarations()
     {
         // Arrange
         var declaring = new WireBuilder();
         var declarer = declaring.GetDeclarer("application");
-        declarer.AddShapeSource(Recognises(typeof(Reference), new Shape.Unwraps(0)));
+        declarer.AddShapeSource(Recognizes(typeof(Reference), new Shape.Unwraps(0)));
         declarer.Add(typeof(Count), new Shape.As(Carrier.Int32));
 
         // Act
@@ -227,11 +227,11 @@ public class WireTests
     /// would say that the author of a convention declared somebody else's type.
     /// </summary>
     [Fact]
-    public void WhatOnlyAConventionRecognises_ShouldHaveNoDeclarer()
+    public void WhatOnlyAConventionRecognizes_ShouldHaveNoDeclarer()
     {
         // Arrange
         var declaring = new WireBuilder();
-        declaring.GetDeclarer("dispatch").AddShapeSource(Recognises(typeof(Reference), new Shape.Unwraps(0)));
+        declaring.GetDeclarer("dispatch").AddShapeSource(Recognizes(typeof(Reference), new Shape.Unwraps(0)));
 
         // Act
         var wire = declaring.Build(serializer);
@@ -758,8 +758,8 @@ public class WireTests
 
     private static IShapeSource Reads(Type type, Carrier carrier) => new Source(type, carrier);
 
-    /// <summary>A convention: it recognises one type and has no list it could be read through.</summary>
-    private static IShapeSource Recognises(Type type, Shape shape) => new Convention(type, shape);
+    /// <summary>A convention: it recognizes one type and has no list it could be read through.</summary>
+    private static IShapeSource Recognizes(Type type, Shape shape) => new Convention(type, shape);
 
     /// <summary>What a wire whose words are the names of the members, cut down, answers of each value.</summary>
     private sealed class LowerCasedWords : IEnumerationSource

@@ -64,7 +64,7 @@ public abstract record Shape
     /// </param>
     /// <param name="IsSelfExplanatory">
     /// Whether the language of whoever reads has a kind of its own for such a text already, which is what a
-    /// moment in time written as one is: a name of ours over it would hide what the reader would recognise.
+    /// moment in time written as one is: a name of ours over it would hide what the reader would recognize.
     /// </param>
     public sealed record AsText(
         string? Pattern = null,

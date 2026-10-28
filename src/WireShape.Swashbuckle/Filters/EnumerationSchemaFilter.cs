@@ -28,7 +28,7 @@ public sealed class EnumerationSchemaFilter(Wire wire) : ISchemaFilter
         }
 
         var byName = wire.TravelsByName(context.Type);
-        var travelling = values
+        var traveling = values
             .Select(value => wire.GetValueForm(context.Type, value)?.Text ?? ((Enum) value).ToString("D"))
             .ToArray();
 
@@ -38,7 +38,7 @@ public sealed class EnumerationSchemaFilter(Wire wire) : ISchemaFilter
         // The numbers as they travel and not as they underlie the members, because a converter is free to write
         // a value under a number of its own and it is the one a caller has to send.
         written.Enum = byName
-            ? travelling.Select(word => (JsonNode) JsonValue.Create(word)!).ToList()
-            : travelling.Select(number => JsonNode.Parse(number)!).ToList();
+            ? traveling.Select(word => (JsonNode) JsonValue.Create(word)!).ToList()
+            : traveling.Select(number => JsonNode.Parse(number)!).ToList();
     }
 }

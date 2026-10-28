@@ -64,7 +64,7 @@ public static class Invariants
 
     /// <summary>
     /// No schema offers a member that never travels. Which member that is depends on what the wire is made of,
-    /// so whoever runs this says which one, there being no way to ask a convention what it recognises.
+    /// so whoever runs this says which one, there being no way to ask a convention what it recognizes.
     /// </summary>
     public static IReadOnlyCollection<string> FindSchemasCarrying(
         string name,
