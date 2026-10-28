@@ -1,0 +1,8 @@
+version: 2
+
+updates:
+  # The actions are pinned by commit, so a new release reaches the workflow only through a pull request.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
