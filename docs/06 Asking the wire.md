@@ -1,5 +1,8 @@
 # Asking the wire
 
+**Packages:** `IOKode.WireShape`, and `IOKode.WireShape.SystemTextJson` for a wire written with
+`System.Text.Json`
+
 A wire is the declarations made for it together with its writer. The two make up a `Wire`, and everything it
 answers is answered from them, so what it says and what is written cannot come apart.
 
@@ -38,6 +41,8 @@ public interface ISerializer
   word, or a number that need not be the one underlying the member.
 - **A value turned into what carries it, and back.** What turns one into the other is the converter of the wire,
   and it cannot be asked to do half of its work.
+
+### Through System.Text.Json
 
 `IOKode.WireShape.SystemTextJson` answers all of them from a `JsonSerializerOptions`, which is the usual writer of
 an application that serves JSON:
@@ -123,7 +128,7 @@ carries them only where they were declared.
 
 Where both know the same type, the declaration wins. That is what declaring is for: it corrects the word the writer
 would give one kind without touching the other kinds of that base. As with declaring,
-[a base is never one of its own kinds](03%20Declaring%20a%20form.md#what-a-type-turns-out-to-be).
+[a base is never one of its own kinds](05%20Hierarchies%20and%20enumerations.md#what-a-type-turns-out-to-be).
 
 ```csharp
 wire.GetDeclaredKinds();    // every kind this wire can name
@@ -131,8 +136,9 @@ wire.GetDeclaredKinds();    // every kind this wire can name
 
 What only the writer knows is not among those, and neither is what a source answers only when it is asked. Both
 answer about a type that is named to them and cannot be asked to name them all. That is why a hierarchy nothing
-else mentions has to be declared for anyone to find it. [Declaring a form](03%20Declaring%20a%20form.md) says how a
-kind is declared and which two declarations are refused.
+else mentions has to be declared for anyone to find it. [Hierarchies and
+enumerations](05%20Hierarchies%20and%20enumerations.md) says how a kind is declared and which two declarations are
+refused.
 
 ## Everything that travels with a type
 
@@ -179,5 +185,85 @@ wire.GetStructures(new[] {typeof(Booking)});
 empty object, and a document describes it as carrying nothing, which is the mistake whose shape is hardest to
 notice. There is one way out, and it is always open: declare what that type travels as.
 
-What each row can say is in [the model of an API](07%20Reading%20what%20an%20application%20serves.md), which is
-read from this.
+The model of an API is read from this answer, as
+[reading what an application serves](10%20Reading%20what%20an%20application%20serves.md#what-travels) says.
+
+## What each type comes out as
+
+Each row of the answer is one of five cases:
+
+| | What it means |
+| --- | --- |
+| `Carried(By, NeedsItsOwnName)` | It comes out as another type, which is `By`: the carrier it was declared to travel as, or what a wrapper left behind when it disappeared |
+| `Object(Members, Base, Kinds)` | It travels as an object with these members, under the nearest type above it that travels as one of several, and as one of these kinds |
+| `Enumeration(ByName, Values)` | It travels as one of a set of values, by the word of each or by the number of each. Each value carries the number underlying it and the text it travels as |
+| `OneOf(Alternatives)` | It comes out as one of several forms, each under the name it was declared with and with the type it travels as. Which one arrived is told by what arrived |
+| `File` | It comes out as the content of a file, which travels as it stands and is not written inside anything else |
+
+So of the booking API:
+
+- `BookingReference` is `Carried(string, needs its own name)`;
+- `BoardingAt` is `Carried(string, needs none)`;
+- `Money` is `Carried(MoneyParts, needs none)`;
+- `Segment` is an `Object` with two kinds;
+- `CabinClass` is an `Enumeration` by word;
+- `PassengerRef` is a `OneOf` of two;
+- a boarding pass is a `File`.
+
+**A wrapper that disappears is not a case of its own.** How a type came to come out as another — a carrier named in
+the declaration, or a wrapper leaving one of its own arguments behind — is a fact of the declaring. What travels is
+the same either way: that other type, in its place. An answer that said which of the two it had been would
+carry something about how it was written down, and this answer carries what travels.
+
+**A hierarchy is not a `OneOf` either, and the difference lies with whoever receives it.**
+
+- A type with kinds travels as an object, and which kind it is is said by a member inside it. It is read by reading
+  that member, and a client writes it as a type with its kinds below it.
+- One of several forms has nothing to read. It is resolved by looking at what arrived, and a client writes it as
+  one type that knows how to read any of them.
+
+They are two cases because they are two different pieces of work.
+
+**An alternative is a name and a type, not what that type comes out as.**
+
+- The name is the one it was declared under, and it is what a client calls the one way of reading that branch.
+- An alternative is a form, not a declared type, so it has no **schema** name to keep.
+- What one of those types comes out as is the same question as for the type of a member. It is a row of this table
+  where there is an answer to give, and where there is none it is one of the things every writer writes as it
+  stands.
+
+The one thing this loses is two alternatives that travel as the same type, which cannot be told apart here. It
+loses nothing a client could have written, because two branches of one type are two branches a client cannot
+declare either.
+
+## Whether a type needs a name of its own
+
+`NeedsItsOwnName` is asked of all five cases, and it answers one question: does the meaning of such a value live
+nowhere but in this type? Where it does, whoever writes a document or a client has to give the type a place of its
+own — a schema, a type. Where it does not, what it comes out as is written instead.
+
+| | Needs one | Because |
+| --- | --- | --- |
+| `Object` | yes | its members live nowhere else, so there has to be somewhere to write them |
+| `Enumeration` | yes | which values are admitted lives nowhere else either |
+| `OneOf` | yes | that these alternatives are one field lives nowhere else: with the type gone, what is left is several forms with nothing saying they belong together |
+| `File` | no | the meaning is in what travels — content, under a name and a media type — and a name of ours adds nothing to it |
+| `Carried` as a text, a number, a GUID | yes | a text is any text: with the name gone, nothing is left of what the value meant |
+| `Carried` as a date or an instant | no | whoever reads a document knows a date where it says so, and a name of ours over it would hide that |
+| `Carried` as a carrier with members | no | what travels is the carrier's object, and the name in the document is the carrier's |
+| `Carried` by a wrapper that disappeared | no | a wrapper means nothing by itself, so there is nothing of it to write |
+
+**Which name it goes under is not here, and nothing in this library decides it.** A document names its schemas and
+a client names its types, and one type may go by a different name in each; that is what `nameOf` is for. What is
+said here is only that there has to be one.
+
+The last row is the one whoever reads the answer cannot work out. A wrapper that comes out as a text comes out as
+something that *does* need a name of its own. Taking the answer from the carrier would write `Amended<string>` as a
+type of its own, with nothing of its own to put in it. The name belongs to what the wrapper left behind, never to
+the wrapper, so it is said in the answer.
+
+A type written whole is not described at all, and neither is a list, a map or an array. The first is something
+every client already knows. The others leave nothing of themselves and are described by what they hold.
+
+A type between a kind and its base that declares nothing of its own leaves no trace: `Base` is the nearest type
+above it that travels as one of several.

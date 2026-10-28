@@ -1,8 +1,10 @@
 # Declaring a form
 
+**Package:** `IOKode.WireShape`
+
 Declare a form for a type whose written shape is settled by a converter of its own, because nothing can be asked
 about one of those. Everything else is answered by the writer of the wire. What a type turns out to be is declared
-too, but that is not a form: it is declared kind by kind, further down.
+too, but that is not a form: [hierarchies and enumerations](05%20Hierarchies%20and%20enumerations.md) says how.
 
 Everything here is of the booking API of [getting started](02%20Getting%20started.md).
 
@@ -56,8 +58,9 @@ be told which is which, and only you know.
 
 **It is not a hierarchy.** A hierarchy is several types under a word that travels inside each of them, and whoever
 receives one reads that word. A union is several forms with nothing to read, and whoever receives one looks at
-what came. Where there is a word to read, [declare the kinds](#what-a-type-turns-out-to-be) instead. It is the
-readable one of the two, and it is the one a client can be written for.
+what came. Where there is a word to read,
+[declare the kinds](05%20Hierarchies%20and%20enumerations.md#what-a-type-turns-out-to-be) instead. It is the readable
+one of the two, and it is the one a client can be written for.
 
 A union is refused in four cases, all of them when the form is made, so that a convention or a catalog cannot
 slip one in either:
@@ -79,7 +82,7 @@ Two alternatives that cannot be told apart from each other are **not** refused.
 with different members. Judging that in general would mean intersecting patterns and weighing which members are
 required, and a check that got it wrong would refuse what a reader reads perfectly well. So it is left to you.
 What **does** refuse such a pair is the C# client this library writes, which reads by what arrived and by nothing
-else; [a client of an API](08%20A%20client%20of%20an%20API.md) says so there.
+else; [a client of an API](11%20A%20client%20of%20an%20API.md) says so there.
 
 **`Unwraps`** — it disappears once written, and the type it wraps takes its place. The argument index says which of
 its generic arguments that is.
@@ -97,7 +100,8 @@ bookings.AddShapeSource(new AmendedWireShapes());
 ```
 
 `Amended<T>` is a family and not a type, so it is declared as a convention and not as a line.
-[Where a form can be read from](#where-a-form-can-be-read-from) says what a convention is.
+[Reading declarations from a source](04%20Reading%20declarations%20from%20a%20source.md#where-a-form-can-be-read-from)
+says what a convention is.
 
 **`Members`** — it travels as an object with these members, named as they travel. Use it for a type the writer
 cannot be asked about, or for one written by a converter that builds the object itself. No type of the example is
@@ -231,206 +235,6 @@ wire for each, which is what an application that writes the same types in two pl
 whatever it is reading at the moment it is asked. In JSON, that is a set of options whose converters are a list
 somebody else can still add to. A wire is not a photograph.
 
-## Asked type by type, and asked to name them all
-
-```csharp
-wire.GetShape(typeof(BookingReference));   // a text, with that pattern
-wire.GetDeclaredShapes();                  // every type whose form this wire knows
-```
-
-`GetShape` answers in one order, and the order is the point:
-
-1. what was declared of that type one by one;
-2. what a source answers, the first one added before the rest.
-
-A declaration of its own says more than a source does. That a string is a booking reference is not something the
-converter of one ever said, so the declaration is answered first. `GetDeclaredShapes` is built the same way: the
-sources first, and what was declared one by one written over them. It is read once, when the wire is built, so it
-is the same answer however often it is asked.
-
-**Between two declarations of one type there is no order: the second is refused.** Saying the same form twice is
-not a disagreement and is let through, and the part that said it first keeps it, because a part that agrees did
-not declare anything.
-
-**Why:** taking either of the two would make what a value looks like depend on the order in which the parts of a
-wire happened to be composed, and nobody reasons about that. If two parts disagree about a type, that is worth
-hearing, not resolving by coincidence.
-
-Sources work the other way. Whether two of them can answer about one type is only known for a type that is asked
-about, never of the sources themselves. What cannot be seen when it is declared is settled where it can be: the
-first source added answers, whatever kind of source it is.
-
-**What only a convention recognizes is not among the declarations.** A convention recognizes a type when it is
-asked about one, and cannot be asked to name them all, so whoever needs those types has to ask type by type.
-Everything that walks the declarations — the type descriptors, the schemas of a document — therefore never sees
-`Amended<DepartsOn>` until something mentions it.
-
-## Where a form can be read from
-
-Some forms are already said by something else. Reading them from there saves a line that would say the same thing
-twice. That is what an `IShapeSource` is for: a wire is where a form is kept, not where it is deduced.
-
-There are two kinds of source. Which kind a source is says something about the source; it is not a spare method.
-
-**A convention** recognizes a type when it is put in front of it, and has no list behind it, because there is no
-set to list. Which `Amended<T>` exist depends on what the API lets a caller leave out.
-
-```csharp
-/// <summary>Every identifier of this wire travels as the GUID its own converter writes.</summary>
-public sealed class IdentifierShapes : IShapeSource
-{
-    private static readonly Shape identifier = new Shape.As(Carrier.Guid);
-
-    public Shape? GetShape(Type type, ISerializer serializer) =>
-        typeof(IIdentifier).IsAssignableFrom(type) ? identifier : null;
-}
-```
-
-**A catalog** keeps forms somebody already wrote down, so asking it to name them all has a complete answer. The
-usual one reads the converters of the wire. A converter written as `ValueJsonConverter<TValue, TJson>` says, by
-its own declaration, that `TValue` travels as `TJson`, so every type written by one of those is named without a
-line of its own anywhere. `Carrier.Of` turns the `TJson` it finds into the carrier to declare.
-
-```csharp
-public sealed class ConverterShapes(JsonSerializerOptions options) : IShapeCatalog
-{
-    public Shape? GetShape(Type type, ISerializer serializer) => /* … */;
-
-    public IReadOnlyDictionary<Type, Shape> GetDeclarations(ISerializer serializer) => /* … */;
-}
-```
-
-Take either kind with `AddShapeSource`:
-
-```csharp
-bookings.AddShapeSource(new IdentifierShapes());
-bookings.AddShapeSource(new ConverterShapes(options));
-```
-
-Where two sources could answer about one type, the one added first answers and the rest are not asked, so the
-order you add them in is the order they are tried. Being a catalog buys no precedence. What it buys is that what
-it names is among the declarations, and so is seen by everything that walks them without anybody mentioning it
-first.
-
-## What a type turns out to be
-
-Declare a hierarchy kind by kind. A kind is a pair of types, with the word that tells one apart inside the other:
-
-```csharp
-bookings.AddKind<Segment, FlightSegment>("flight");
-bookings.AddKind(new HierarchyKind(typeof(Segment), typeof(TrainSegment), "train"));
-```
-
-**Why one fact at a time:** that is what a hierarchy is made of. The word belongs to the pair and not to either
-type on its own, because the same type can be a kind of two bases and travel under a different word in each. And
-inheritance is open, so nobody holding a base necessarily knows every type that derives from it.
-
-Two declarations are refused, and they are the only two that cannot be written or read:
-
-- the same pair given a second word, which cannot be written;
-- one word given to two kinds of one base, which cannot be read.
-
-A word used under two different bases is neither, and is let through.
-
-```csharp
-wire.GetKinds(typeof(Segment));      // (FlightSegment, "flight"), (TrainSegment, "train")
-wire.GetDeclaredKinds();             // every kind this wire can name
-```
-
-A base is never one of its own kinds, whatever answers. Registering the base among its kinds is how a hierarchy is
-usually written down, but the base is not one of the things it turns out to be.
-
-An `IHierarchySource` reads the kinds of a base from wherever they are already written down, as an `IShapeSource`
-does with forms:
-
-```csharp
-/// <summary>What the types of these assemblies turn out to be, read from the attribute each kind carries.</summary>
-public sealed class AttributedHierarchies(IEnumerable<Assembly> assemblies) : IHierarchySource
-{
-    private readonly IReadOnlyCollection<HierarchyKind> kinds = assemblies
-        .SelectMany(assembly => assembly.GetTypes())
-        .Select(type => (Type: type, Told: type.GetCustomAttribute<ToldApartAsAttribute>()))
-        .Where(found => found.Told != null)
-        .Select(found => new HierarchyKind(found.Type.BaseType!, found.Type, found.Told!.Word))
-        .ToArray();
-
-    public IReadOnlyCollection<Kind> GetKinds(Type declaredBase, ISerializer serializer) =>
-        kinds.Where(kind => kind.Base == declaredBase)
-            .Select(kind => new Kind(kind.Type, kind.Discriminator))
-            .ToArray();
-
-    public IReadOnlyCollection<HierarchyKind> GetDeclarations(ISerializer serializer) => kinds;
-}
-```
-
-Take it with `AddKindSource`. Where two sources can answer about one base, the first one added answers, as with a
-source of forms:
-
-```csharp
-bookings.AddKindSource(new AttributedHierarchies(new[] {typeof(Segment).Assembly}));
-```
-
-This source can name all its kinds, so a hierarchy nothing mentions is still described. A source that answers
-about a base only when it is asked returns nothing from `GetDeclarations`. With one of those, a hierarchy nobody
-mentions has to be declared for anyone to find it.
-
-## What an enumeration comes out as
-
-An enumeration is two facts, and they are declared in two places, because they are facts about two different
-things.
-
-**How it comes out** is a form, declared as any other form is. A text means it travels as words; anything else
-means numbers.
-
-```csharp
-bookings.Add<CabinClass>(new Shape.AsText());
-```
-
-The example does not declare it, because it does not have to. Where no form is declared, every value is asked,
-and a word declared for each of them already says that the enumeration travels as words.
-
-**What comes out for each value** is a word of that value. Declare it one value at a time, as a kind is declared:
-
-```csharp
-bookings.AddWord(CabinClass.Economy, "economy");
-bookings.AddWord(CabinClass.Business, "business");
-```
-
-The same two declarations are refused, and again they are the only two things that can be wrong:
-
-- one value given a second word, which cannot be written;
-- one word given to two values of the same enumeration, which cannot be read.
-
-A word used in two different enumerations is neither, and is let through.
-
-An enumeration declared to travel as a number carries the numbers underlying its own members, so there is nothing
-to declare of each value. Declaring words for one is refused when the wire is built, because either the words
-travel or the numbers do, and nothing could write both.
-
-The `DisruptionReason` of the example travels as its numbers without being declared at all. No word is declared
-for any of its values, and the writer writes the codes settled long ago, which are what travels.
-
-Where the words are a convention and not a list — every enumeration of this wire travels under its own member
-names, cut one way or another — an `IEnumerationSource` says it once:
-
-```csharp
-/// <summary>Every enumeration of this wire travels under the name of its member, in snake case.</summary>
-public sealed class SnakeCasedWords : IEnumerationSource
-{
-    public string? GetWord(Type enumType, object value, ISerializer serializer) =>
-        Enum.GetName(enumType, value) is {} name ? SnakeCase.Of(name) : null;
-}
-```
-
-Take it with `AddWordSource`. Where two sources can answer about one value, the first one added answers:
-
-```csharp
-bookings.AddWordSource(new SnakeCasedWords());
-```
-
-Unlike a source of forms or of kinds, it has one question and not two. Which values an enumeration has is answered
-by the language, so nobody ever has to ask a source to name them all.
-
 ## Who declared what
 
 A wire is composed of parts, and the form alone does not always tell them apart. Two parts may each declare a type
@@ -475,4 +279,4 @@ All of this is of one wire, and [the problem](01%20The%20problem.md#what-is-not-
 its own forms.
 
 What cannot be split by wire is the binder. A type descriptor belongs to the whole process, so only one wire can
-teach it. [Reading a value from text](05%20Reading%20a%20value%20from%20text.md) says what follows from that.
+teach it. [Reading a value from text](07%20Reading%20a%20value%20from%20text.md) says what follows from that.

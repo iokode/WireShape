@@ -1,5 +1,7 @@
 # Reading a value from text
 
+**Package:** `IOKode.WireShape.ComponentModel`
+
 A route and a query string carry text. A value declared to travel as a text or a number has to be read out of
 that text, and read in the form the wire declares. Otherwise what a caller may put in a query string and what they
 may put in a body come apart.

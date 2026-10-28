@@ -11,14 +11,31 @@ Two words are used from here to the end, and they are defined once:
 
 - **the writer** of a wire is whatever turns a value into what travels: a serializer, a codec, a formatter.
   Everything a declaration does not say is asked of it, and there are four such things;
-  [asking the wire](04%20Asking%20the%20wire.md) says which. For an application that serves JSON, the writer is a
+  [asking the wire](06%20Asking%20the%20wire.md) says which. For an application that serves JSON, the writer is a
   `JsonSerializerOptions`, read through `JsonSerializerOptionsSerializer`.
 - **a carrier** is the type a value travels whole as, together with what a value of that type looks like once
   written. `Carrier.Guid` is a GUID, written as a text under the format `uuid`. The twenty that every writer writes
   whole are in the library already, and a wire that needs another declares one;
   [declaring a form](03%20Declaring%20a%20form.md) says how.
 
-Every other word used in a sense of its own is in the [glossary](Glossary.md).
+Every other word used in a sense of its own is in the [glossary](13%20Glossary.md).
+
+## What to install
+
+Every package depends on `IOKode.WireShape`, and on nothing of this library beyond what its row says. Install the
+ones for what you do:
+
+| To | Install | Read |
+| --- | --- | --- |
+| Declare forms and ask a wire about them | `IOKode.WireShape` | [Declaring a form](03%20Declaring%20a%20form.md), [reading declarations from a source](04%20Reading%20declarations%20from%20a%20source.md), [hierarchies and enumerations](05%20Hierarchies%20and%20enumerations.md), [asking the wire](06%20Asking%20the%20wire.md) |
+| Ask `System.Text.Json` what a declaration does not say | `IOKode.WireShape.SystemTextJson` | [Asking the wire](06%20Asking%20the%20wire.md#through-systemtextjson) |
+| Read a declared value out of a route or a query string | `IOKode.WireShape.ComponentModel` | [Reading a value from text](07%20Reading%20a%20value%20from%20text.md) |
+| Say what a declaration becomes in an OpenAPI document | `IOKode.WireShape.OpenApi` | [An OpenAPI document](08%20An%20OpenAPI%20document.md) |
+| Write it into the documents Swashbuckle generates | `IOKode.WireShape.Swashbuckle`, which brings `OpenApi` | [A document through Swashbuckle](09%20A%20document%20through%20Swashbuckle.md) |
+| Read the calls an ASP.NET Core application serves, as a model of its API | `IOKode.WireShape.AspNetCore`, which brings `ComponentModel` | [Reading what an application serves](10%20Reading%20what%20an%20application%20serves.md) |
+| Write a C# client of that model | `IOKode.WireShape.CSharpClient`, which brings `AspNetCore` | [A client of an API](11%20A%20client%20of%20an%20API.md) |
+| Hold what a wire is declared from to its rules, in your tests | `IOKode.WireShape.Testing` | [The rules](12%20The%20rules.md#what-a-wire-is-declared-from) |
+| Hold a document to its rules, in your tests | `IOKode.WireShape.OpenApi.Testing`, which brings `OpenApi` | [The rules](12%20The%20rules.md#what-a-document-is-held-to) |
 
 ## Declare what travels
 
@@ -109,7 +126,7 @@ wire.GetValueForm(typeof(CabinClass), CabinClass.Economy);   // Word("economy")
 ```
 
 What a declaration does not say is asked of the writer, so what the wire says and what is written cannot come
-apart. [Asking the wire](04%20Asking%20the%20wire.md) says which four things only the writer knows. It also says
+apart. [Asking the wire](06%20Asking%20the%20wire.md) says which four things only the writer knows. It also says
 why the kinds and the words are the two answers where the declarations and the writer are taken **together**.
 
 ## Everything that travels with a booking
@@ -156,7 +173,8 @@ What comes out:
 - a boarding pass is a text of bytes.
 
 `nameOf` is a `Func<Type, string>`, and it is yours: nothing here decides what a schema is called.
-[An OpenAPI document](06%20An%20OpenAPI%20document.md) says the rest.
+[An OpenAPI document](08%20An%20OpenAPI%20document.md) and
+[a document through Swashbuckle](09%20A%20document%20through%20Swashbuckle.md) say the rest.
 
 ## Read one out of a route
 
@@ -171,7 +189,7 @@ foreach (var (type, converter) in TypeDescriptors.GetConverters(wire))
 ```
 
 One converter serves every value of the wire that can be read from text at all.
-[Reading a value from text](05%20Reading%20a%20value%20from%20text.md) says the rest.
+[Reading a value from text](07%20Reading%20a%20value%20from%20text.md) says the rest.
 
 ## Write a client of it
 
@@ -205,8 +223,8 @@ var shown = booking.Passenger.Kind switch
 ```
 
 Nothing in that client works out what travels. It was written from the model, and the model was answered by the
-wire. [Reading what an application serves](07%20Reading%20what%20an%20application%20serves.md) and
-[A client of an API](08%20A%20client%20of%20an%20API.md) say the rest.
+wire. [Reading what an application serves](10%20Reading%20what%20an%20application%20serves.md) and
+[A client of an API](11%20A%20client%20of%20an%20API.md) say the rest.
 
 ## And hold the document to it
 
@@ -219,4 +237,4 @@ broken.AddRange(Invariants.FindNamedValuesDescribedOtherwise(name, document, wir
 Assert.Empty(broken);
 ```
 
-[What a document is held to](09%20What%20a%20document%20is%20held%20to.md) says the rest.
+[The rules](12%20The%20rules.md) says the rest.

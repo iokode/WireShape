@@ -1,6 +1,8 @@
 # A client of an API
 
-A client is written from [the model of an API](07%20Reading%20what%20an%20application%20serves.md) and from
+**Package:** `IOKode.WireShape.CSharpClient`
+
+A client is written from [the model of an API](10%20Reading%20what%20an%20application%20serves.md) and from
 nothing else: no wire, no serializer, no running application. What it writes is C#: one class per controller, a
 type per thing that travels, and the small runtime they need beside them.
 
@@ -95,7 +97,7 @@ most one alternative of each — because nothing in a union says which of them c
 **And it refuses to write a union whose alternatives arrive looking alike**, such as two texts or two objects, and
 names them. This reading cannot tell whether a reader could tell such a pair apart by a pattern or by which members
 they carry, and a reading that guessed would hand over the wrong one in silence. Declaring such a union is not
-refused, because [a document can describe it](06%20An%20OpenAPI%20document.md). So what has to change is either
+refused, because [a document can describe it](08%20An%20OpenAPI%20document.md). So what has to change is either
 what travels or who reads it.
 
 ## What is written beside it

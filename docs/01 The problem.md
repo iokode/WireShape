@@ -74,6 +74,25 @@ That is the whole idea. The rest of this documentation is what follows from it: 
 of the writer instead of being declared, how a document, a client and a binder read a declaration, and what each of
 them is still free to decide.
 
+## What else there is
+
+Each tool that needs the form can be told it, and each is told in a way of its own, which none of the others reads:
+
+| | How it is told the form | What is left |
+| --- | --- | --- |
+| Swashbuckle | `MapType<T>`, a schema written by hand for one type | The document is right. The binder and a client still work the form out from the type, and the schema is a second statement of what the converter says, kept in step by hand |
+| `Microsoft.AspNetCore.OpenApi` | A schema transformer, code that rewrites a schema once it is written | The same, for one generator |
+| NSwag | A type mapper, for a type it works out wrongly from reflection | The same, for one generator |
+| `JsonSchemaExporter` | Nothing: it asks the serializer | For a type a converter took over, `true` |
+| Kiota, and any generator of clients | Nothing: it reads a document | The client is as right as the document it was read from, and no more |
+
+So the form ends up stated once per tool, and the statements can drift apart without anything noticing. Here it is
+stated once, and each tool is a reader of that one statement. What ships reads it into Swashbuckle, a C# client
+and the type descriptors of the framework. Another tool can read the same declaration through
+[`Schemas`](08%20An%20OpenAPI%20document.md) or
+[the model of an API](10%20Reading%20what%20an%20application%20serves.md), but nothing here writes that reader for
+it.
+
 ## What is not here
 
 **A wire is one place where values are written**: the API an application serves, the JSON a column keeps, the body
