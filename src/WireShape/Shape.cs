@@ -178,6 +178,7 @@ public abstract record Shape
             Alternatives = alternatives;
         }
 
+        /// <summary>The forms it comes out as, in the order they were declared, each under its name.</summary>
         public IReadOnlyList<Alternative> Alternatives { get; }
 
         /// <summary>
@@ -213,6 +214,13 @@ public abstract record Shape
 /// One member of what travels: the name it travels under, what it carries, whether it may be absent, and whether
 /// it is only ever written by whoever answers, which is the case of a member worked out from the others.
 /// </summary>
+/// <param name="Name">The name it travels under, which is not always the name it has in the code.</param>
+/// <param name="Type">What it carries.</param>
+/// <param name="IsOptional">Whether it may be absent from what travels, or travel as null.</param>
+/// <param name="IsAnswerOnly">
+/// Whether only an answer ever carries it: a member a caller cannot give, because it has no setter and no
+/// constructor parameter.
+/// </param>
 /// <param name="Declared">
 /// The member of the type this one came out of, where whoever answered knew it. Null for a member of a
 /// declaration, which is written and comes out of nothing.

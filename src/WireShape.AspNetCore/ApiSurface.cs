@@ -35,6 +35,11 @@ public sealed class ApiSurface(
     Func<MethodInfo, bool> belongs,
     Func<MethodInfo, Type?> operationOf)
 {
+    /// <summary>
+    /// The calls of the assembly that belong to this surface, read from the explorer without starting a server,
+    /// opening anything or instantiating a controller. They come ordered by controller and then by the name they
+    /// take in a client, so that reading the same assembly twice gives the same list.
+    /// </summary>
     public IReadOnlyList<ApiAction> GetActions()
     {
         var services = new ServiceCollection();

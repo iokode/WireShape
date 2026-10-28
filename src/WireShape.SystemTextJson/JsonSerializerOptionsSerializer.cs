@@ -25,6 +25,7 @@ public sealed class JsonSerializerOptionsSerializer(JsonSerializerOptions option
     /// </summary>
     public JsonSerializerOptions Options => options;
 
+    /// <inheritdoc/>
     public IReadOnlyList<Member>? GetMembers(Type type)
     {
         JsonTypeInfo contract;
@@ -59,6 +60,7 @@ public sealed class JsonSerializerOptionsSerializer(JsonSerializerOptions option
             .ToArray();
     }
 
+    /// <inheritdoc/>
     public IReadOnlyCollection<Kind>? GetKinds(Type type)
     {
         JsonTypeInfo contract;

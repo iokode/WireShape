@@ -18,6 +18,7 @@ public sealed class UnwrapSchemaFilter(
     Unwrapping unwrapping,
     Func<Type, string> nameOf) : ISchemaFilter
 {
+    /// <inheritdoc/>
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {
         if (wire.GetShape(context.Type) is not Shape.Unwraps unwraps)

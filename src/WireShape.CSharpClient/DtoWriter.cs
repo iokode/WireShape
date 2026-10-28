@@ -16,6 +16,7 @@ public sealed class DtoWriter(ApiModel model, TypeNames names)
     private readonly StringBuilder written = new();
     private readonly HashSet<Type> done = new();
 
+    /// <summary>The C# written so far: the types, and nothing that uses them.</summary>
     public string Written => written.ToString();
 
     /// <summary>Writes every type asked for, and every type those ask for in turn.</summary>

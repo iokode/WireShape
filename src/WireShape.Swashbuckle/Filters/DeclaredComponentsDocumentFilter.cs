@@ -19,6 +19,7 @@ public sealed class DeclaredComponentsDocumentFilter(
     Wire wire,
     Func<Type, string> nameOf) : IDocumentFilter
 {
+    /// <inheritdoc/>
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
         var pointedAt = Documents.GetPointedAt(swaggerDoc);

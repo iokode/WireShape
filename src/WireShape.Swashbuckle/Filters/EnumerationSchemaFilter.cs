@@ -14,6 +14,7 @@ namespace IOKode.WireShape.Swashbuckle.Filters;
 /// </summary>
 public sealed class EnumerationSchemaFilter(Wire wire) : ISchemaFilter
 {
+    /// <inheritdoc/>
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {
         if (!context.Type.IsEnum || schema is not OpenApiSchema written)

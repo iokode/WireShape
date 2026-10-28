@@ -11,9 +11,16 @@ namespace IOKode.WireShape;
 /// </remarks>
 public enum ValueKind
 {
+    /// <summary>A text, whatever it holds: a word, an identifier, a date.</summary>
     Text,
+
+    /// <summary>A whole number.</summary>
     Integer,
+
+    /// <summary>A number that may have a fractional part.</summary>
     Decimal,
+
+    /// <summary>A truth: true or false.</summary>
     Boolean
 }
 
@@ -53,26 +60,40 @@ public sealed record Carrier(
     /// </summary>
     public bool KeepsItsName => !IsSelfExplanatory;
 
+    /// <summary>A <see cref="string"/>, written as a text.</summary>
     public static Carrier String { get; } = new(typeof(string), ValueKind.Text);
 
+    /// <summary>A <see cref="char"/>, written as a text of one character.</summary>
     public static Carrier Char { get; } = new(typeof(char), ValueKind.Text);
 
+    /// <summary>A <see cref="System.Guid"/>, written as a text under the format <c>uuid</c>.</summary>
     public static Carrier Guid { get; } = new(typeof(System.Guid), ValueKind.Text, "uuid");
 
+    /// <summary>A <see cref="bool"/>, written as a truth.</summary>
     public static Carrier Boolean { get; } = new(typeof(bool), ValueKind.Boolean);
 
+    /// <summary>A <see cref="byte"/>, written as a whole number under the format <c>int32</c>.</summary>
     public static Carrier Byte { get; } = new(typeof(byte), ValueKind.Integer, "int32");
 
+    /// <summary>An <see cref="sbyte"/>, written as a whole number under the format <c>int32</c>.</summary>
     public static Carrier SByte { get; } = new(typeof(sbyte), ValueKind.Integer, "int32");
 
+    /// <summary>A <see cref="short"/>, written as a whole number under the format <c>int32</c>.</summary>
     public static Carrier Int16 { get; } = new(typeof(short), ValueKind.Integer, "int32");
 
+    /// <summary>A <see cref="ushort"/>, written as a whole number under the format <c>int32</c>.</summary>
     public static Carrier UInt16 { get; } = new(typeof(ushort), ValueKind.Integer, "int32");
 
+    /// <summary>An <see cref="int"/>, written as a whole number under the format <c>int32</c>.</summary>
     public static Carrier Int32 { get; } = new(typeof(int), ValueKind.Integer, "int32");
 
+    /// <summary>
+    /// A <see cref="uint"/>, written as a whole number under the format <c>int64</c>, which is the smallest that holds
+    /// it.
+    /// </summary>
     public static Carrier UInt32 { get; } = new(typeof(uint), ValueKind.Integer, "int64");
 
+    /// <summary>A <see cref="long"/>, written as a whole number under the format <c>int64</c>.</summary>
     public static Carrier Int64 { get; } = new(typeof(long), ValueKind.Integer, "int64");
 
     /// <summary>
@@ -80,24 +101,43 @@ public sealed record Carrier(
     /// </summary>
     public static Carrier UInt64 { get; } = new(typeof(ulong), ValueKind.Integer);
 
+    /// <summary>A <see cref="float"/>, written as a number under the format <c>float</c>.</summary>
     public static Carrier Single { get; } = new(typeof(float), ValueKind.Decimal, "float");
 
+    /// <summary>A <see cref="double"/>, written as a number under the format <c>double</c>.</summary>
     public static Carrier Double { get; } = new(typeof(double), ValueKind.Decimal, "double");
 
+    /// <summary>A <see cref="decimal"/>, written as a number under the format <c>decimal</c>.</summary>
     public static Carrier Decimal { get; } = new(typeof(decimal), ValueKind.Decimal, "decimal");
 
+    /// <summary>
+    /// A <see cref="System.DateOnly"/>, written as a text under the format <c>date</c>, and self-explanatory.
+    /// </summary>
     public static Carrier DateOnly { get; } =
         new(typeof(System.DateOnly), ValueKind.Text, "date", IsSelfExplanatory: true);
 
+    /// <summary>
+    /// A <see cref="System.TimeOnly"/>, written as a text under the format <c>time</c>, and self-explanatory.
+    /// </summary>
     public static Carrier TimeOnly { get; } =
         new(typeof(System.TimeOnly), ValueKind.Text, "time", IsSelfExplanatory: true);
 
+    /// <summary>
+    /// A <see cref="System.DateTime"/>, written as a text under the format <c>date-time</c>, and self-explanatory.
+    /// </summary>
     public static Carrier DateTime { get; } =
         new(typeof(System.DateTime), ValueKind.Text, "date-time", IsSelfExplanatory: true);
 
+    /// <summary>
+    /// A <see cref="System.DateTimeOffset"/>, written as a text under the format <c>date-time</c>, and self-
+    /// explanatory.
+    /// </summary>
     public static Carrier DateTimeOffset { get; } =
         new(typeof(System.DateTimeOffset), ValueKind.Text, "date-time", IsSelfExplanatory: true);
 
+    /// <summary>
+    /// A <see cref="System.TimeSpan"/>, written as a text under the format <c>duration</c>, and self-explanatory.
+    /// </summary>
     public static Carrier TimeSpan { get; } =
         new(typeof(System.TimeSpan), ValueKind.Text, "duration", IsSelfExplanatory: true);
 

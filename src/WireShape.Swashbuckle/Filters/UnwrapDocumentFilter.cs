@@ -13,6 +13,7 @@ namespace IOKode.WireShape.Swashbuckle.Filters;
 /// </summary>
 public sealed class UnwrapDocumentFilter(Unwrapping unwrapping) : IDocumentFilter
 {
+    /// <inheritdoc/>
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
         var schemas = context.SchemaRepository.Schemas;

@@ -29,6 +29,9 @@ internal sealed class UnionWriter(StringBuilder written, ApiModel model, TypeNam
         List
     }
 
+    /// <param name="Name">The name the alternative was declared under, as the client calls it.</param>
+    /// <param name="Type">What the alternative is held as, written as C#.</param>
+    /// <param name="Arrives">What a value of the alternative looks like on arrival.</param>
     /// <param name="IsValue">
     /// Whether the type is one of values, which decides how the one that is held is read back out: the field
     /// admits nothing either way, and what admits nothing is read out of a value by its own member and out of a

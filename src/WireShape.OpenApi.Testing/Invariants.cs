@@ -82,6 +82,8 @@ public static class Invariants
     /// of the serializer, by writing a value and looking at what came out, because what decides it is a
     /// converter and not the type.
     /// </summary>
+    /// <param name="name">The name the document goes by, which every answer starts with.</param>
+    /// <param name="document">The document being held to the rule.</param>
     /// <param name="written">What the wire writes, asked of the thing that writes it.</param>
     /// <param name="nameOf">What a type is called in this document.</param>
     /// <param name="assemblies">Where the types this document describes are declared.</param>
@@ -170,6 +172,11 @@ public static class Invariants
     /// worked out from the others is one the reader can work out too, and publishing it is one more thing to keep
     /// consistent for nothing.
     /// </summary>
+    /// <param name="name">The name the document goes by, which every answer starts with.</param>
+    /// <param name="document">The document being held to the rule.</param>
+    /// <param name="written">What the wire writes, asked of the thing that writes it.</param>
+    /// <param name="assemblies">Where the types this document describes are declared.</param>
+    /// <param name="nameOf">What a type is called in this document.</param>
     /// <param name="isValueObject">
     /// Which of the types is a value object, there being nothing in a type that says so.
     /// </param>

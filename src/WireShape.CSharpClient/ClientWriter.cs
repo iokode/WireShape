@@ -21,8 +21,14 @@ public sealed class ClientWriter(ApiModel model, TypeNames names, Func<string, s
 {
     private readonly StringBuilder written = new();
 
+    /// <summary>The C# written so far: the clients, and nothing they need beside them.</summary>
     public string Written => written.ToString();
 
+    /// <summary>
+    /// Writes a client per controller these actions are on, in the order of the controllers' names, each with the
+    /// calls of that controller. Every type a call mentions is asked of the names, which is what puts it in the
+    /// queue of what has to be declared.
+    /// </summary>
     public void Write(IReadOnlyList<ApiAction> actions)
     {
         foreach (var controller in actions.GroupBy(action => action.Controller).OrderBy(group => group.Key))

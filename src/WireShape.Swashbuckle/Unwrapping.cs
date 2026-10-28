@@ -16,7 +16,14 @@ public sealed class Unwrapping
 {
     private readonly ConcurrentDictionary<string, Type> wrapped = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Notes that the schema under this id is a wrapper, and the type it wraps. Noting the same id again keeps the
+    /// last type noted.
+    /// </summary>
+    /// <param name="schemaId">The id the wrapper's schema went by in the document.</param>
+    /// <param name="wrappedType">The type it wraps, which takes its place.</param>
     public void Note(string schemaId, Type wrappedType) => wrapped[schemaId] = wrappedType;
 
+    /// <summary>Every wrapper noted so far, by the id its schema went by, with the type it wraps.</summary>
     public IReadOnlyCollection<KeyValuePair<string, Type>> Noted => wrapped.ToArray();
 }

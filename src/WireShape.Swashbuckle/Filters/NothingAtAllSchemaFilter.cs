@@ -17,6 +17,7 @@ namespace IOKode.WireShape.Swashbuckle.Filters;
 /// </remarks>
 public sealed class NothingAtAllSchemaFilter(Wire wire) : ISchemaFilter
 {
+    /// <inheritdoc/>
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {
         var optional = (wire.GetMembers(context.Type) ?? Array.Empty<Member>())

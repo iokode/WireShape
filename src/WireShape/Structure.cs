@@ -39,6 +39,11 @@ public abstract record Structure
     /// declaring, and what travels is the same either way: that other type, in its place.
     /// </remarks>
     /// <param name="By">The type that travels where this one was.</param>
+    /// <param name="NeedsItsOwnName">
+    /// Whether the meaning of the value lives nowhere but in this type, which is the case of a text, a number or a
+    /// GUID that keeps its name. A self-explanatory carrier, another type of the wire and a wrapper that
+    /// disappeared need none.
+    /// </param>
     public sealed record Carried(Type By, bool NeedsItsOwnName) : Structure;
 
     /// <summary>It travels as an object with these members, and as one of these kinds where it has any.</summary>

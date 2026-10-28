@@ -11,6 +11,7 @@ namespace IOKode.WireShape.Swashbuckle.Filters;
 /// </summary>
 public sealed class DiscriminatorEnumSchemaFilter(Wire wire) : ISchemaFilter
 {
+    /// <inheritdoc/>
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {
         if (schema.Discriminator?.Mapping == null)

@@ -35,6 +35,7 @@ public sealed class DeclaredKindsDocumentFilter(
     Func<Type, string> nameOf,
     string discriminator) : IDocumentFilter
 {
+    /// <inheritdoc/>
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
         var schemas = context.SchemaRepository.Schemas;
