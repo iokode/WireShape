@@ -115,6 +115,6 @@ Every package carries one version, moved for all of them at once, and the packag
 one tree. They are prerelease: a form, a name or a signature changes where the one before it was wrong, and
 nothing is kept around to make the older way of saying it still work.
 
-## Licence
+## License
 
-BSD 2-Clause. See [LICENCE](LICENCE).
+BSD 2-Clause. See [LICENSE](LICENSE).
