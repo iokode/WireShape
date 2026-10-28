@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../Packable.props"/>
 
+    <PropertyGroup Label="Package settings">
+        <Description>Reads a declared value out of a route or a query string, through the type converters of the framework. $(WireShapeDescription)</Description>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="../WireShape/WireShape.csproj"/>
     </ItemGroup>

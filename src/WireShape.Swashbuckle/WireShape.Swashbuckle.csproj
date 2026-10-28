@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../Packable.props"/>
 
+    <PropertyGroup Label="Package settings">
+        <Description>Writes the declarations into the documents Swashbuckle generates. $(WireShapeDescription)</Description>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="Swashbuckle.AspNetCore"/>
     </ItemGroup>

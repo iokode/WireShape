@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../Packable.props"/>
 
+    <PropertyGroup Label="Package settings">
+        <Description>Rules to run in your tests over what a wire is declared from. $(WireShapeDescription)</Description>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="../WireShape/WireShape.csproj"/>
     </ItemGroup>

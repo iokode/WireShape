@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../Packable.props"/>
 
+    <PropertyGroup Label="Package settings">
+        <Description>Rules to run in your tests over an OpenAPI document of a wire. $(WireShapeDescription)</Description>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="../WireShape.OpenApi/WireShape.OpenApi.csproj"/>
     </ItemGroup>

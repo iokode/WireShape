@@ -2,11 +2,12 @@
 
     <PropertyGroup Label="Package settings">
         <IsPackable>true</IsPackable>
-        <Version>0.1.0-dev10</Version>
+        <Version>0.1.0-dev11</Version>
         <PackageId>$(AssemblyName)</PackageId>
         <Authors>IOKode</Authors>
         <Copyright>Copyright (c) 2026, IOKode</Copyright>
-        <Description>The written form of a value, declared once as data and read by whoever has to describe it, declare it to a caller or read it back out of text.</Description>
+        <!-- Each package writes its own description and ends it with this. -->
+        <WireShapeDescription>Part of WireShape: the written form of a value, declared once as data and read by whoever has to describe it, declare it to a caller or read it back out of text.</WireShapeDescription>
         <PackageTags>wire, serialization, json, openapi, schema, api-client</PackageTags>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageReadmeFile>README.md</PackageReadmeFile>

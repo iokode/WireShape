@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../Packable.props"/>
 
+    <PropertyGroup Label="Package settings">
+        <Description>Declares what a value looks like once written, and answers what a wire writes. $(WireShapeDescription)</Description>
+    </PropertyGroup>
+
 </Project>

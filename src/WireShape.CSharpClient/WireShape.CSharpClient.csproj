@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../Packable.props"/>
 
+    <PropertyGroup Label="Package settings">
+        <Description>Writes a C# client from the model of an API. $(WireShapeDescription)</Description>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="../WireShape.AspNetCore/WireShape.AspNetCore.csproj"/>
     </ItemGroup>

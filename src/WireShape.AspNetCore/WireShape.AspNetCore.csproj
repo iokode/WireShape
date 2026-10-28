@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../Packable.props"/>
 
+    <PropertyGroup Label="Package settings">
+        <Description>Reads the calls an ASP.NET Core application serves, as a model of its API. $(WireShapeDescription)</Description>
+    </PropertyGroup>
+
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App"/>
     </ItemGroup>

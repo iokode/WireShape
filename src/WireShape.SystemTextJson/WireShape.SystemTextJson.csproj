@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../Packable.props"/>
 
+    <PropertyGroup Label="Package settings">
+        <Description>Asks System.Text.Json what a declaration does not say: the members of a type, its kinds and what an enumeration value comes out as. $(WireShapeDescription)</Description>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="../WireShape/WireShape.csproj"/>
     </ItemGroup>
