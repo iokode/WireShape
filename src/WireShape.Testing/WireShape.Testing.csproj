@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../Packable.props"/>
+
+    <ItemGroup>
+        <ProjectReference Include="../WireShape/WireShape.csproj"/>
+    </ItemGroup>
+
+</Project>

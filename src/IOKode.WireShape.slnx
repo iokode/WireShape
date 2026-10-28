@@ -7,6 +7,7 @@
   <Project Path="WireShape.OpenApi.Testing/WireShape.OpenApi.Testing.csproj" />
   <Project Path="WireShape.SystemTextJson/WireShape.SystemTextJson.csproj" />
   <Project Path="WireShape.CSharpClient/WireShape.CSharpClient.csproj" />
+  <Project Path="WireShape.Testing/WireShape.Testing.csproj" />
   <Folder Name="/Tests/">
     <Project Path="Tests.WireShape/Tests.WireShape.csproj" />
     <Project Path="Tests.WireShape.ComponentModel/Tests.WireShape.ComponentModel.csproj" />
@@ -17,5 +18,6 @@
     <Project Path="Tests.WireShape.SystemTextJson/Tests.WireShape.SystemTextJson.csproj" />
     <Project Path="Tests.WireShape.CSharpClient/Tests.WireShape.CSharpClient.csproj" />
     <Project Path="Tests.WireShape.Documentation/Tests.WireShape.Documentation.csproj" />
+    <Project Path="Tests.WireShape.Testing/Tests.WireShape.Testing.csproj" />
   </Folder>
 </Solution>
