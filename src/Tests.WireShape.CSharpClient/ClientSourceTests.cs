@@ -79,6 +79,35 @@ public class ClientSourceTests
         Assert.DoesNotContain("public sealed partial record Consignment", source);
     }
 
+    /// <summary>
+    /// What cannot be written is the model that was handed over, so it is refused as that and not as a state
+    /// of something whoever called never saw.
+    /// </summary>
+    [Fact]
+    public void AModelWithAUnionWhoseAlternativesArriveAlike_ShouldBeRefusedAsTheArgumentItIs()
+    {
+        // Arrange
+        var types = new Dictionary<Type, Structure>(Shipments.Types)
+        {
+            [typeof(Phone)] = new Structure.OneOf(new[]
+            {
+                new AlternativeType("national", typeof(string)),
+                new AlternativeType("international", typeof(TrackingCode))
+            })
+        };
+
+        var model = new ApiModel(BuildCalls(), types, Array.Empty<HierarchyKind>(), "kind");
+
+        // Act
+        var writing = () => ClientSource.Write(model, "Shipping.Client", Shipments.NameOf);
+
+        // Assert
+        var refused = Assert.Throws<ArgumentException>(writing);
+        Assert.Equal("model", refused.ParamName);
+        Assert.Contains("National", refused.Message);
+        Assert.Contains("International", refused.Message);
+    }
+
     private static ApiAction[] BuildCalls() => new[]
     {
         new ApiAction

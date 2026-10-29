@@ -81,8 +81,15 @@ public sealed class DtoWriter(ApiModel model, TypeNames names)
     /// another, and an amount cannot be read as a percentage.
     /// </summary>
     /// <remarks>
-    /// Declared partial and without a reading of its own, so that whoever consumes the client can say how one
-    /// is shown. What travels is answered apart from that, and a route or a query carries it unchanged.
+    /// Its text is the one it travels as, which is what a route and a query carry, so that a value goes into
+    /// either without reaching for what it holds and forgetting to does not compile into the text of a record.
+    /// That text is its only one: a <c>ToString</c> of its own in the part whoever consumes the client writes
+    /// would be a second, and a route built from it would no longer carry what travels.
+    /// <para>
+    /// A value that arrives as null is refused where it is read. Whoever answers broke the contract, and what
+    /// came out otherwise is a value that looks whole and holds nothing, which fails later and elsewhere. One
+    /// that may be absent is read as no value before it gets here.
+    /// </para>
     /// </remarks>
     private void WriteValue(Type type, Type carrier)
     {
@@ -93,6 +100,8 @@ public sealed class DtoWriter(ApiModel model, TypeNames names)
         written.AppendLine($"public readonly partial record struct {name}({carried} Value) : IApiValue");
         written.AppendLine("{");
         written.AppendLine("    object? IApiValue.Written => Value;");
+        written.AppendLine();
+        written.AppendLine("    public override string ToString() => ApiCall.Text(this) ?? string.Empty;");
         written.AppendLine();
         written.AppendLine($"    public static implicit operator {carried}({name} value) => value.Value;");
         written.AppendLine();
@@ -105,8 +114,11 @@ public sealed class DtoWriter(ApiModel model, TypeNames names)
         written.AppendLine("{");
         written.AppendLine($"    public override {name} Read(ref System.Text.Json.Utf8JsonReader reader, " +
                            "Type typeToConvert, System.Text.Json.JsonSerializerOptions options) =>");
+        written.AppendLine("        reader.TokenType == System.Text.Json.JsonTokenType.Null");
         written.AppendLine(
-            $"        new(System.Text.Json.JsonSerializer.Deserialize<{carried}>(ref reader, options)!);");
+            $"            ? throw new System.Text.Json.JsonException(\"A {name} does not arrive as null.\")");
+        written.AppendLine(
+            $"            : new(System.Text.Json.JsonSerializer.Deserialize<{carried}>(ref reader, options)!);");
         written.AppendLine();
         written.AppendLine($"    public override void Write(System.Text.Json.Utf8JsonWriter writer, {name} value, " +
                            "System.Text.Json.JsonSerializerOptions options) =>");
