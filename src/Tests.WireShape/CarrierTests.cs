@@ -38,6 +38,28 @@ public class CarrierTests
         Assert.Equal(ValueKind.Text, carrier.Kind);
     }
 
+    /// <summary>
+    /// Under the format of what each is written as, and under none where no format names it or no one is true
+    /// of every value: a document saying one thing of a value while the wire writes another is what this
+    /// library is for preventing.
+    /// </summary>
+    public static TheoryData<Carrier, string?> FormatsOfTime => new()
+    {
+        {Carrier.DateOnly, "date"},
+        {Carrier.TimeOnly, "time-local"},
+        {Carrier.DateTime, null},
+        {Carrier.DateTimeOffset, "date-time"},
+        {Carrier.TimeSpan, null}
+    };
+
+    [Theory]
+    [MemberData(nameof(FormatsOfTime))]
+    public void AMomentInTime_ShouldBeUnderTheFormatOfWhatItIsWrittenAs(Carrier carrier, string? format)
+    {
+        // Assert
+        Assert.Equal(format, carrier.Format);
+    }
+
     public static TheoryData<Carrier> Values => new(
         Carrier.String, Carrier.Guid, Carrier.Decimal, Carrier.Int64, Carrier.Boolean);
 
