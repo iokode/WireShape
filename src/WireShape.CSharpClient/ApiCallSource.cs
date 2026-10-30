@@ -207,7 +207,7 @@ public static class ApiCallSource
             /// What it wrote is read back and not unquoted, because the quotes are not all the serializer adds:
             /// it escapes what it writes inside them, and a <c>+</c> would travel as <c>+</c>.
             /// </remarks>
-            internal static string? Text(object? value) => value switch
+            public static string? Text(object? value) => value switch
             {
                 null => null,
                 IApiValue carried => Text(carried.Written),
