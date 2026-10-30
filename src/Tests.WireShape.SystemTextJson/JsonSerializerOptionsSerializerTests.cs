@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -186,42 +187,158 @@ public class JsonSerializerOptionsSerializerTests
     }
 
     [Fact]
-    public void AValue_ShouldBeTurnedIntoWhatCarriesIt()
+    public void AValue_ShouldBeWrittenAsTheTextItsConverterWrites()
     {
         // Arrange
         var serializer = BuildSerializer(new TrackingCodeJsonConverter());
 
         // Act
-        var carried = serializer.WriteAsCarrier(typeof(TrackingCode), typeof(string), new TrackingCode("AB123456789"));
+        var written = serializer.WriteAsText(typeof(TrackingCode), new TrackingCode("AB123456789"));
 
         // Assert
-        Assert.Equal("AB123456789", carried);
+        Assert.Equal("AB123456789", written);
+    }
+
+    /// <summary>
+    /// The text and not what the format wraps it in: no quotes, and none of the escapes the serializer writes
+    /// inside them.
+    /// </summary>
+    [Theory]
+    [InlineData("a+b")]
+    [InlineData("añadido")]
+    [InlineData("<\"quoted\">")]
+    public void AText_ShouldBeWrittenAsItIs(string text)
+    {
+        // Arrange
+        var serializer = BuildSerializer(new TrackingCodeJsonConverter());
+
+        // Act
+        var written = serializer.WriteAsText(typeof(TrackingCode), new TrackingCode(text));
+
+        // Assert
+        Assert.Equal(text, written);
+    }
+
+    /// <summary>As the body has them, whatever the culture of whoever writes.</summary>
+    public static TheoryData<object, string> WrittenWhole => new()
+    {
+        {new DateTimeOffset(2026, 10, 29, 9, 30, 0, TimeSpan.FromHours(1)), "2026-10-29T09:30:00+01:00"},
+        {new DateTime(2026, 10, 29, 9, 30, 0, DateTimeKind.Utc), "2026-10-29T09:30:00Z"},
+        {new TimeOnly(9, 30, 0).Add(TimeSpan.FromMilliseconds(500)), "09:30:00.5000000"},
+        {true, "true"},
+        {12.5, "12.5"},
+        {12.50m, "12.50"}
+    };
+
+    [Theory]
+    [MemberData(nameof(WrittenWhole))]
+    public void AValueOfTheFramework_ShouldBeWrittenAsItIsInABody(object value, string text)
+    {
+        // Arrange
+        var serializer = BuildSerializer();
+
+        // Act
+        var written = InACulture("es-ES", () => serializer.WriteAsText(value.GetType(), value));
+
+        // Assert
+        Assert.Equal(text, written);
+    }
+
+    /// <summary>Written nowhere, so written as text nowhere either.</summary>
+    [Fact]
+    public void AValueTheWriterCannotWrite_ShouldBeRefused()
+    {
+        // Arrange
+        var serializer = BuildSerializer();
+
+        // Act
+        var writing = () => serializer.WriteAsText(typeof(double), double.NaN);
+
+        // Assert
+        Assert.Throws<ArgumentException>(writing);
     }
 
     [Fact]
-    public void WhatCarriesAValue_ShouldBeTurnedBackIntoIt()
+    public void AText_ShouldBeReadBackIntoTheValueItWasWrittenFrom()
     {
         // Arrange
         var serializer = BuildSerializer(new TrackingCodeJsonConverter());
 
         // Act
-        var declared = serializer.ReadFromCarrier(typeof(TrackingCode), typeof(string), "AB123456789");
+        var read = serializer.ReadFromText(typeof(TrackingCode), ValueKind.Text, "a+b");
 
         // Assert
-        Assert.Equal(new TrackingCode("AB123456789"), declared);
+        Assert.Equal(new TrackingCode("a+b"), read);
+    }
+
+    /// <summary>
+    /// Read as a body reads it, so that an instant written in UTC comes back in UTC and a time of day comes
+    /// back with its fraction.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(WrittenWhole))]
+    public void TheTextOfAValueOfTheFramework_ShouldBeReadBackIntoThatValue(object value, string text)
+    {
+        // Arrange
+        var serializer = BuildSerializer();
+        var kind = Carrier.Of(value.GetType())!.Kind;
+
+        // Act
+        var read = InACulture("es-ES", () => serializer.ReadFromText(value.GetType(), kind, text));
+
+        // Assert
+        Assert.Equal(value, read);
+        Assert.Equal((value as DateTime?)?.Kind, (read as DateTime?)?.Kind);
+    }
+
+    /// <summary>
+    /// A number is one number and a truth one truth. Whatever else the format could make of the text — an
+    /// object, a list — is not what was asked for, and reading it would hand a converter something nobody
+    /// wrote.
+    /// </summary>
+    [Theory]
+    [InlineData(ValueKind.Integer, "{\"value\":1}")]
+    [InlineData(ValueKind.Integer, "[1]")]
+    [InlineData(ValueKind.Integer, "\"1\"")]
+    [InlineData(ValueKind.Boolean, "1")]
+    public void ATextThatIsNotOfTheKindAskedFor_ShouldBeRefused(ValueKind kind, string text)
+    {
+        // Arrange
+        var serializer = BuildSerializer();
+
+        // Act
+        var reading = () => serializer.ReadFromText(typeof(long), kind, text);
+
+        // Assert
+        Assert.Throws<JsonException>(reading);
     }
 
     [Fact]
-    public void NothingAtAll_ShouldBeTurnedIntoNothingAtAll()
+    public void ATextThatIsNoValueOfTheType_ShouldBeRefused()
     {
         // Arrange
-        var serializer = BuildSerializer(new TrackingCodeJsonConverter());
+        var serializer = BuildSerializer();
 
         // Act
-        var carried = serializer.WriteAsCarrier(typeof(TrackingCode?), typeof(string), null);
+        var reading = () => serializer.ReadFromText(typeof(int), ValueKind.Integer, "12.5");
 
         // Assert
-        Assert.Null(carried);
+        Assert.Throws<JsonException>(reading);
+    }
+
+    private static T InACulture<T>(string culture, Func<T> act)
+    {
+        var current = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo(culture);
+
+        try
+        {
+            return act();
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = current;
+        }
     }
 
     private static ISerializer BuildSerializer(params JsonConverter[] converters)

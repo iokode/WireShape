@@ -25,9 +25,9 @@ public static class TypeDescriptors
     public static IReadOnlyDictionary<Type, TypeConverter> GetConverters(Wire wire)
     {
         return wire.GetDeclaredShapes()
-            .Select(declaration => (Type: declaration.Key, Carrier: declaration.Value.Shape.Carrier?.Type))
+            .Select(declaration => (Type: declaration.Key, declaration.Value.Shape.Carrier))
             .Where(declaration => declaration.Carrier != null &&
-                                  ShapeTypeConverter.ReadsFromText(declaration.Carrier))
+                                  ShapeTypeConverter.ReadsFromText(declaration.Carrier.Type))
             .ToDictionary(
                 declaration => declaration.Type,
                 declaration => (TypeConverter) new ShapeTypeConverter(

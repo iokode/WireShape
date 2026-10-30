@@ -27,16 +27,17 @@ because there is no type to read the text as.
 So of the booking API, `BookingReference`, `PassengerId`, `FlightDuration`, `DepartsOn` and `BoardingAt` are read
 from a route. `Money`, a boarding pass and a `PassengerRef` are not, and nothing pretends otherwise.
 
-Each converter is a `ShapeTypeConverter`, and one class serves every type. The text is read as the type the value
-travels as, and the value is then built by the writer:
+Each converter is a `ShapeTypeConverter`, and one class serves every type. The text is read by the writer of the
+wire, told what the value travels as — a text, a number, a truth — and nothing else reads it:
 
 ```
-"QX7F2P" ──► read as string ──► written as JSON ──► read as BookingReference
+"QX7F2P" ──► read by the writer as a text ──► BookingReference
 ```
 
-The other way is the same, backwards, so a value written into a route reads back as the text it traveled as. What
-this gives is that the form is always the converter's: a booking reference with its pattern, a duration that is a
-number of minutes, an enumeration under the word its converter writes instead of the name it has in the code.
+The other way is the writer too, so a value written into a route is the text it has in a body. What this gives is
+that the form is always the converter's: a booking reference with its pattern, a duration that is a number of
+minutes, an enumeration under the word its converter writes instead of the name it has in the code, a time of day
+with its fraction and an instant in UTC that says so, and none of it in the culture of the process.
 
 ## What has to happen first
 

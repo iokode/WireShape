@@ -10,14 +10,14 @@ namespace IOKode.WireShape.ComponentModel;
 /// </summary>
 /// <remarks>
 /// One of these serves every type that travels as a value of its own, instead of one class per type saying again
-/// what the converter of that type already decided. The text is read as the declared type and the value is then
-/// built by whoever writes it, so that what a caller may put in text and what they may put in a document of
-/// their own cannot come apart.
+/// what the converter of that type already decided. The text is written and read by whoever writes the wire, and
+/// by nothing of its own, so that the text a route carries is the one a body carries and what a caller may put
+/// in either cannot come apart.
 /// </remarks>
 /// <param name="valueType">The type the value is declared as.</param>
-/// <param name="carrier">The type it travels as.</param>
-/// <param name="wire">The wire it travels on, which is what turns one of the two into the other.</param>
-public sealed class ShapeTypeConverter(Type valueType, Type carrier, Wire wire)
+/// <param name="carrier">What it travels as, which says whether its text is a text, a number or a truth.</param>
+/// <param name="wire">The wire it travels on, whose writer writes and reads the text.</param>
+public sealed class ShapeTypeConverter(Type valueType, Carrier carrier, Wire wire)
     : TypeConverter
 {
     /// <summary>
@@ -43,9 +43,7 @@ public sealed class ShapeTypeConverter(Type valueType, Type carrier, Wire wire)
             return base.ConvertFrom(context, culture, value);
         }
 
-        var carried = TypeDescriptor.GetConverter(carrier).ConvertFromInvariantString(text);
-
-        return wire.ReadFromCarrier(valueType, carrier, carried);
+        return wire.ReadFromText(valueType, carrier.Kind, text);
     }
 
     /// <inheritdoc/>
@@ -60,8 +58,6 @@ public sealed class ShapeTypeConverter(Type valueType, Type carrier, Wire wire)
             return base.ConvertTo(context, culture, value, destinationType);
         }
 
-        var carried = wire.WriteAsCarrier(valueType, carrier, value);
-
-        return TypeDescriptor.GetConverter(carrier).ConvertToInvariantString(carried);
+        return wire.WriteAsText(valueType, value);
     }
 }
