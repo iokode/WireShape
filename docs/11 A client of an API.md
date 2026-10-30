@@ -47,7 +47,7 @@ Three things it does not decide:
 
 | What the model says | What is written | Of the example |
 | --- | --- | --- |
-| It travels as a value and keeps its name | A `record struct` of one member with a converter of its own, and an implicit conversion each way | `BookingReference`, `PassengerId`, `FlightDuration` |
+| It travels as a value and keeps its name | A `record struct` of one member with a converter of its own that refuses a `null`, an implicit conversion each way, and a `ToString` that is the text it travels as | `BookingReference`, `PassengerId`, `FlightDuration` |
 | It travels as a value and keeps no name | Nothing. What it travels as is written where it is used, so the caller is handed the kind their own language has | `DepartsOn` is a `DateOnly`, `BoardingAt` a `DateTimeOffset` |
 | It travels as another type of the wire | Nothing of its own. That type is written where it is used | `Money` is a `MoneyParts` |
 | An object | A `partial record` with settable members: `required` where the caller has to give it, and asked of nobody where only an answer carries it | `Booking`, `Passenger`, `MoneyParts` |
@@ -109,7 +109,7 @@ itself: no package to install and no version to keep in step. It holds:
 - what a value of the wire looks like from outside;
 - the refusal of a call, with the reason it gave;
 - the options everything is read and written with;
-- the making of a URL, a query, a body and a form.
+- the making of a URL, a query, a body and a form, with a value in a route or a query written as it is in a body.
 
 And one attribute, for a kind added to a hierarchy that another client declares. That hierarchy was written without
 knowing the kind existed, so the kind is the one to say it.

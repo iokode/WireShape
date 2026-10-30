@@ -15,8 +15,8 @@ public static class ApiCallSource
         /// code as a text.
         /// </summary>
         /// <remarks>
-        /// What travels is said here and not by reading the value as text, so that whoever consumes the client
-        /// is free to read one as it should be shown without that changing what goes in a route or a query.
+        /// What travels is said here, and its text is what a route, a query and the value's own <c>ToString</c>
+        /// all write: the text it has in a body, and one and the same wherever it goes.
         /// </remarks>
         public interface IApiValue
         {
@@ -198,23 +198,24 @@ public static class ApiCallSource
                 return new ApiDownload(response, fileName, contentType, content);
             }
 
-            private static string? Text(object? value) => value switch
+            /// <summary>
+            /// The text a value travels as in a route or a query, before either escapes it: the one it has in a
+            /// body. Written by the serializer, with the options a body is written with, so that the two cannot
+            /// drift: a moment, a time of day and a word of an enumeration are each written once, and by it.
+            /// </summary>
+            /// <remarks>
+            /// What it wrote is read back and not unquoted, because the quotes are not all the serializer adds:
+            /// it escapes what it writes inside them, and a <c>+</c> would travel as <c>+</c>.
+            /// </remarks>
+            internal static string? Text(object? value) => value switch
             {
                 null => null,
                 IApiValue carried => Text(carried.Written),
-                string written => written,
-                bool written => written ? "true" : "false",
-
-                // Written as it is written in a body, because a value of an enumeration travels under the word
-                // the wire writes it as and not under the name it carries here. Said with the serializer so that
-                // the two cannot drift, and unquoted because a route and a query carry text.
-                Enum written => JsonSerializer.Serialize(written, written.GetType(), Options).Trim('"'),
-                DateOnly written => written.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                TimeOnly written => written.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
-                DateTime written => written.ToString("O", CultureInfo.InvariantCulture),
-                IFormattable written => written.ToString(null, CultureInfo.InvariantCulture),
-                _ => value.ToString()
+                _ => Written(JsonSerializer.SerializeToElement(value, value.GetType(), Options))
             };
+
+            private static string Written(JsonElement written) =>
+                written.ValueKind == JsonValueKind.String ? written.GetString()! : written.GetRawText();
         }
 
         /// <summary>The reason the application gives when it refuses.</summary>

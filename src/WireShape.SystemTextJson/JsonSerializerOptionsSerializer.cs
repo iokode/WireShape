@@ -93,27 +93,56 @@ public sealed class JsonSerializerOptionsSerializer(JsonSerializerOptions option
 
     /// <remarks>
     /// Written and read back out of what came out, because what a value comes out as is decided by a converter
-    /// and the only way of knowing what it decided is to let it decide.
+    /// and the only way of knowing what it decided is to let it decide. Read back and not unquoted, so that the
+    /// word is the word and not the escapes the serializer writes it with.
     /// </remarks>
     public EnumerationValueForm? GetValueForm(Type enumType, object value)
     {
-        var written = JsonSerializer.Serialize(value, enumType, options);
+        var written = JsonSerializer.SerializeToElement(value, enumType, options);
 
-        return written.StartsWith('"')
-            ? new EnumerationValueForm.Word(written.Trim('"'))
-            : new EnumerationValueForm.Integer(written);
+        return written.ValueKind == JsonValueKind.String
+            ? new EnumerationValueForm.Word(Text(written))
+            : new EnumerationValueForm.Integer(Text(written));
     }
 
     /// <remarks>
-    /// Written and read back, because what turns one into the other is the converter of the wire and there is
-    /// no asking it to do half of its work.
+    /// What was written is read back and not unquoted, because the quotes are not all the serializer adds: it
+    /// escapes what it writes inside them, and a <c>+</c> would come out as <c>+</c>.
     /// </remarks>
-    public object? WriteAsCarrier(Type valueType, Type carrier, object? value) =>
-        JsonSerializer.Deserialize(JsonSerializer.Serialize(value, valueType, options), carrier, options);
+    public string WriteAsText(Type type, object value) =>
+        Text(JsonSerializer.SerializeToElement(value, type, options));
 
-    /// <inheritdoc cref="WriteAsCarrier"/>
-    public object? ReadFromCarrier(Type valueType, Type carrier, object? carried) =>
-        JsonSerializer.Deserialize(JsonSerializer.Serialize(carried, carrier, options), valueType, options);
+    /// <remarks>
+    /// A text is put back inside quotes, escaped as the serializer escapes it. Anything else has to be the one
+    /// token its kind is, a number or a truth, so that a text handed over as a number is never read as an
+    /// object or a list the converter would also accept.
+    /// </remarks>
+    public object? ReadFromText(Type type, ValueKind kind, string text) =>
+        JsonSerializer.Deserialize(Token(kind, text), type, options);
+
+    private static string Text(JsonElement written) =>
+        written.ValueKind == JsonValueKind.String ? written.GetString()! : written.GetRawText();
+
+    private static string Token(ValueKind kind, string text)
+    {
+        if (kind == ValueKind.Text)
+        {
+            return JsonSerializer.Serialize(text);
+        }
+
+        using var parsed = JsonDocument.Parse(text);
+
+        var isOfItsKind = parsed.RootElement.ValueKind switch
+        {
+            JsonValueKind.Number => kind is ValueKind.Integer or ValueKind.Decimal,
+            JsonValueKind.True or JsonValueKind.False => kind == ValueKind.Boolean,
+            _ => false
+        };
+
+        return isOfItsKind
+            ? text
+            : throw new JsonException($"'{text}' is not written as a value of the kind {kind}.");
+    }
 
     /// <summary>
     /// Whether a member may be absent: a value that may be nothing, or a reference the language says may be

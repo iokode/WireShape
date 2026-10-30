@@ -42,15 +42,33 @@ public interface ISerializer
     /// </summary>
     EnumerationValueForm? GetValueForm(Type enumType, object value);
 
-    /// <summary>The value a type is declared to travel as, from a value of that type.</summary>
-    /// <param name="valueType">The type as it was declared.</param>
-    /// <param name="carrier">The type it travels as.</param>
-    /// <param name="value">The value as it was declared, or null.</param>
-    object? WriteAsCarrier(Type valueType, Type carrier, object? value);
+    /// <summary>
+    /// The text a value is written as: what a route, a query or anything else that carries text carries of it,
+    /// which is the text it has wherever else it is written.
+    /// </summary>
+    /// <remarks>
+    /// Written, and not worked out, because the text is what the converter of the wire makes of the value and
+    /// nothing else can say it. It is the text and not what the format wraps it in: a word without the quotes
+    /// or the escapes it is written inside.
+    /// <para>
+    /// There is no answer of "I cannot say" here, unlike of the members of a type. Writing a value is what the
+    /// writer does with every one it is handed, and a writer that could not would not be the writer of the
+    /// wire. A value it cannot write is refused as it would be anywhere else.
+    /// </para>
+    /// </remarks>
+    /// <param name="type">The type the value is written as.</param>
+    /// <param name="value">The value.</param>
+    string WriteAsText(Type type, object value);
 
-    /// <summary>The declared value back, from the value it traveled as.</summary>
-    /// <param name="valueType">The type as it was declared.</param>
-    /// <param name="carrier">The type it travels as.</param>
-    /// <param name="carried">The value as it traveled, or null.</param>
-    object? ReadFromCarrier(Type valueType, Type carrier, object? carried);
+    /// <summary>A value back, from the text it is written as.</summary>
+    /// <remarks>
+    /// The text alone does not say what it was written as: <c>125</c> is a text for one type and a number for
+    /// another, and only the first is written inside quotes. So whoever reads says which, from what the type is
+    /// declared to travel as. A text that is not a value of that kind, or not one of the type, is refused, and
+    /// never read as something else the format could make of it.
+    /// </remarks>
+    /// <param name="type">The type to read the value as.</param>
+    /// <param name="kind">What the text was written as.</param>
+    /// <param name="text">The text, as <see cref="WriteAsText"/> gives it.</param>
+    object? ReadFromText(Type type, ValueKind kind, string text);
 }

@@ -117,16 +117,27 @@ public sealed record Carrier(
         new(typeof(System.DateOnly), ValueKind.Text, "date", IsSelfExplanatory: true);
 
     /// <summary>
-    /// A <see cref="System.TimeOnly"/>, written as a text under the format <c>time</c>, and self-explanatory.
+    /// A <see cref="System.TimeOnly"/>, written as a text under the format <c>time-local</c>, and
+    /// self-explanatory.
     /// </summary>
+    /// <remarks>
+    /// Not <c>time</c>, which is a time of day with its offset: a time of day of the framework has none, and is
+    /// written without one.
+    /// </remarks>
     public static Carrier TimeOnly { get; } =
-        new(typeof(System.TimeOnly), ValueKind.Text, "time", IsSelfExplanatory: true);
+        new(typeof(System.TimeOnly), ValueKind.Text, "time-local", IsSelfExplanatory: true);
 
     /// <summary>
-    /// A <see cref="System.DateTime"/>, written as a text under the format <c>date-time</c>, and self-explanatory.
+    /// A <see cref="System.DateTime"/>, written as a text under no format, and self-explanatory.
     /// </summary>
+    /// <remarks>
+    /// Under none because no one is true of all of them. Whether it is written with an offset, with <c>Z</c> or
+    /// with neither is the kind of each value, so one value is a <c>date-time</c> and the next a
+    /// <c>date-time-local</c>. A wire whose instants are all of one kind declares a carrier of its own under the
+    /// format they have.
+    /// </remarks>
     public static Carrier DateTime { get; } =
-        new(typeof(System.DateTime), ValueKind.Text, "date-time", IsSelfExplanatory: true);
+        new(typeof(System.DateTime), ValueKind.Text, IsSelfExplanatory: true);
 
     /// <summary>
     /// A <see cref="System.DateTimeOffset"/>, written as a text under the format <c>date-time</c>, and self-
@@ -136,10 +147,14 @@ public sealed record Carrier(
         new(typeof(System.DateTimeOffset), ValueKind.Text, "date-time", IsSelfExplanatory: true);
 
     /// <summary>
-    /// A <see cref="System.TimeSpan"/>, written as a text under the format <c>duration</c>, and self-explanatory.
+    /// A <see cref="System.TimeSpan"/>, written as a text under no format, and self-explanatory.
     /// </summary>
+    /// <remarks>
+    /// Not <c>duration</c>, which is <c>P1DT2H3M4S</c>: a span of the framework is written <c>1.02:03:04</c>,
+    /// and no format names that.
+    /// </remarks>
     public static Carrier TimeSpan { get; } =
-        new(typeof(System.TimeSpan), ValueKind.Text, "duration", IsSelfExplanatory: true);
+        new(typeof(System.TimeSpan), ValueKind.Text, IsSelfExplanatory: true);
 
     /// <summary>
     /// The carriers every writer writes whole, which are the ones a wire needs nothing declared about.

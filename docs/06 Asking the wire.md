@@ -26,8 +26,8 @@ public interface ISerializer
     IReadOnlyList<Member>? GetMembers(Type type);
     IReadOnlyCollection<Kind>? GetKinds(Type type);
     EnumerationValueForm? GetValueForm(Type enumType, object value);
-    object? WriteAsCarrier(Type valueType, Type carrier, object? value);
-    object? ReadFromCarrier(Type valueType, Type carrier, object? carried);
+    string WriteAsText(Type type, object value);
+    object? ReadFromText(Type type, ValueKind kind, string text);
 }
 ```
 
@@ -39,8 +39,11 @@ public interface ISerializer
   as the second would describe a base as a plain object and say nothing of what really travels.
 - **What a value of an enumeration comes out as**, which no attribute settles and only writing a value shows: a
   word, or a number that need not be the one underlying the member.
-- **A value turned into what carries it, and back.** What turns one into the other is the converter of the wire,
-  and it cannot be asked to do half of its work.
+- **The text a value is written as, and the value back from it.** It is what a route or a query carries, and it
+  is the text the value has in a body: the converter of the wire writes it, without the quotes or the escapes the
+  format wraps it in. Reading is told what the text was written as — a text, a number, a truth — because `125` is
+  one or the other depending on the type, and a text that is not of that kind is refused. Neither answers *I
+  cannot say*: writing a value is what the writer does with every one, and one it cannot write is refused.
 
 ### Through System.Text.Json
 

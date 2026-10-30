@@ -158,13 +158,12 @@ public sealed class Wire
             : serializer.GetValueForm(enumType, value);
     }
 
-    /// <inheritdoc cref="ISerializer.WriteAsCarrier"/>
-    public object? WriteAsCarrier(Type valueType, Type carrier, object? value) =>
-        serializer.WriteAsCarrier(valueType, carrier, value);
+    /// <inheritdoc cref="ISerializer.WriteAsText"/>
+    public string WriteAsText(Type type, object value) => serializer.WriteAsText(type, value);
 
-    /// <inheritdoc cref="ISerializer.ReadFromCarrier"/>
-    public object? ReadFromCarrier(Type valueType, Type carrier, object? carried) =>
-        serializer.ReadFromCarrier(valueType, carrier, carried);
+    /// <inheritdoc cref="ISerializer.ReadFromText"/>
+    public object? ReadFromText(Type type, ValueKind kind, string text) =>
+        serializer.ReadFromText(type, kind, text);
 
     /// <summary>
     /// What a base turns out to be, each with the word that tells it apart: what was declared of it, what a

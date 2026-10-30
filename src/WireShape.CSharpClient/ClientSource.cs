@@ -30,6 +30,10 @@ public static class ClientSource
     /// A namespace the written code reads types from, which is where the reused ones live. Null when there are
     /// none.
     /// </param>
+    /// <exception cref="ArgumentException">
+    /// The model holds something no client can be written for: a union two of whose alternatives arrive looking
+    /// the same, so that nothing could tell which of them came.
+    /// </exception>
     public static string Write(
         ApiModel model,
         string @namespace,
@@ -49,7 +53,17 @@ public static class ClientSource
         // After the clients, because asking for the name of a type is what queues its declaration: what has to
         // be written is known once every call has been written and not before.
         var types = new DtoWriter(model, names);
-        types.WritePending();
+
+        // What the writer refuses is its state, and here every bit of that state is what this was handed: the
+        // refusal is of an argument, and it is said as one.
+        try
+        {
+            types.WritePending();
+        }
+        catch (InvalidOperationException refused)
+        {
+            throw new ArgumentException(refused.Message, nameof(model), refused);
+        }
 
         return new StringBuilder()
             .Append(Head(@namespace, reference))
@@ -72,7 +86,6 @@ public static class ClientSource
             .AppendLine()
             .AppendLine("using System;")
             .AppendLine("using System.Collections.Generic;")
-            .AppendLine("using System.Globalization;")
             .AppendLine("using System.IO;")
             .AppendLine("using System.Linq;")
             .AppendLine("using System.Net;")

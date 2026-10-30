@@ -2,7 +2,7 @@
 
     <PropertyGroup Label="Package settings">
         <IsPackable>true</IsPackable>
-        <Version>0.1.0-dev11</Version>
+        <Version>0.1.0-dev12</Version>
         <PackageId>$(AssemblyName)</PackageId>
         <Authors>IOKode</Authors>
         <Copyright>Copyright (c) 2026, IOKode</Copyright>
