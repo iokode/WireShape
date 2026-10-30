@@ -165,7 +165,9 @@ public sealed record Carrier(Type Type, ValueKind Kind, string? Format = null, b
   twenty**, because a `float`, a `double` and a `decimal` are written as the same kind of number. Which of them it
   is read into is what `Type` says.
 - **`Format`** — which kind of value it is, where there is a settled name for the kind: `uuid`, `date-time`,
-  `int32`. It is a word of whoever describes the wire, not of the writer.
+  `int32`. It is a word of whoever describes the wire, not of the writer, and it names what the writer writes: a
+  format the text does not have is a document saying one thing while the wire writes another. Where no format names
+  what is written, or no one is true of every value, there is none.
 - **`IsSelfExplanatory`** — whether the reader's language already has a kind of its own for this. A name of ours
   over such a value hides what the reader would otherwise recognize, and a client written from it would wrap a
   date of its own language in a type of ours.

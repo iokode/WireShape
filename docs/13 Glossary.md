@@ -77,8 +77,9 @@ declaration does not say is asked of it. `ISerializer`; `IOKode.WireShape.System
 
 ## IOKode.WireShape.ComponentModel
 
-**Shape type converter** — the one converter that reads every declared value out of text: the text is read as the
-carrier, and the value is built from it by the writer. `ShapeTypeConverter`.
+**Shape type converter** — the one converter that reads every declared value out of text and writes it back: the
+writer of the wire reads and writes the text, told whether it is a text, a number or a truth, so that a route carries
+the text a body does. `ShapeTypeConverter`.
 [Reading a value from text](07%20Reading%20a%20value%20from%20text.md#what-it-reads).
 
 **Teaching the descriptors** — telling the type descriptors of the process which converter reads a type out of
