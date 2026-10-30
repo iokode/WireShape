@@ -173,6 +173,25 @@ public class JsonSerializerOptionsSerializerTests
         Assert.Equal(nameof(CarrierService.NextDay), Assert.IsType<EnumerationValueForm.Word>(written).Text);
     }
 
+    /// <summary>
+    /// The word as it is, and not as the serializer escapes it inside the quotes: that is the word a document
+    /// publishes and a binder reads.
+    /// </summary>
+    [Theory]
+    [InlineData(ConsignmentChange.Added, "añadido")]
+    [InlineData(ConsignmentChange.Joined, "a+b")]
+    public void AWordTheSerializerEscapes_ShouldBeReadAsTheWordItIs(ConsignmentChange value, string word)
+    {
+        // Arrange
+        var serializer = BuildSerializer();
+
+        // Act
+        var written = serializer.GetValueForm(typeof(ConsignmentChange), value);
+
+        // Assert
+        Assert.Equal(word, Assert.IsType<EnumerationValueForm.Word>(written).Text);
+    }
+
     [Fact]
     public void TheNumberAnEnumerationValueComesOutAs_ShouldBeRead()
     {

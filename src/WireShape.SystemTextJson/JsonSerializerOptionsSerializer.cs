@@ -93,15 +93,16 @@ public sealed class JsonSerializerOptionsSerializer(JsonSerializerOptions option
 
     /// <remarks>
     /// Written and read back out of what came out, because what a value comes out as is decided by a converter
-    /// and the only way of knowing what it decided is to let it decide.
+    /// and the only way of knowing what it decided is to let it decide. Read back and not unquoted, so that the
+    /// word is the word and not the escapes the serializer writes it with.
     /// </remarks>
     public EnumerationValueForm? GetValueForm(Type enumType, object value)
     {
-        var written = JsonSerializer.Serialize(value, enumType, options);
+        var written = JsonSerializer.SerializeToElement(value, enumType, options);
 
-        return written.StartsWith('"')
-            ? new EnumerationValueForm.Word(written.Trim('"'))
-            : new EnumerationValueForm.Integer(written);
+        return written.ValueKind == JsonValueKind.String
+            ? new EnumerationValueForm.Word(Text(written))
+            : new EnumerationValueForm.Integer(Text(written));
     }
 
     /// <remarks>

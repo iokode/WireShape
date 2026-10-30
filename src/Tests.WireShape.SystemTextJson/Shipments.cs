@@ -56,3 +56,11 @@ public sealed class TrackingCodeJsonConverter : JsonConverter<TrackingCode>
     public override void Write(Utf8JsonWriter writer, TrackingCode value, JsonSerializerOptions options) =>
         writer.WriteStringValue(value.Value);
 }
+
+/// <summary>What happened to a consignment, under words a serializer writes escaped.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ConsignmentChange>))]
+public enum ConsignmentChange
+{
+    [JsonStringEnumMemberName("añadido")] Added,
+    [JsonStringEnumMemberName("a+b")] Joined
+}
