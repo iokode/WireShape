@@ -133,17 +133,48 @@ public static class ApiCallSource
         {
             public static JsonSerializerOptions Options => ApiJson.Options;
 
-            public static string Segment(object? value) => Uri.EscapeDataString(Text(value) ?? string.Empty);
+            /// <summary>The text a value travels as in a route, escaped.</summary>
+            /// <exception cref="ArgumentException">
+            /// The value is written as a collection or an object: the application reads neither back from the JSON
+            /// they are written as.
+            /// </exception>
+            public static string Segment(object? value)
+            {
+                if (value is IApiValue carried)
+                {
+                    return Segment(carried.Written);
+                }
+
+                if (value == null)
+                {
+                    return string.Empty;
+                }
+
+                var written = JsonSerializer.SerializeToElement(value, value.GetType(), Options);
+                if (written.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
+                {
+                    throw new ArgumentException(
+                        $"A value cannot travel in a route: it is written as {WrittenAs(written)}, and a route " +
+                        "carries only values written as one text each.");
+                }
+
+                return Uri.EscapeDataString(Written(written));
+            }
 
             /// <summary>
             /// The query a call carries, with a value under its key and a collection as one pair per element, all
             /// under the same key, which is how the application reads a collection back. A value left out and an
-            /// empty collection write no pair.
+            /// empty collection write no pair, and an element that is null is written with no text, which is how the
+            /// application reads it back as null.
             /// </summary>
+            /// <exception cref="ArgumentException">
+            /// A value is written as an object, or an element of a collection as a collection or an object: the
+            /// application reads neither back from the JSON they are written as.
+            /// </exception>
             public static string Query(IReadOnlyList<KeyValuePair<string, object?>> values)
             {
                 var written = values
-                    .SelectMany(value => Texts(value.Value)
+                    .SelectMany(value => Texts(value.Key, value.Value)
                         .Select(text => $"{Uri.EscapeDataString(value.Key)}={Uri.EscapeDataString(text)}"))
                     .ToArray();
 
@@ -160,11 +191,44 @@ public static class ApiCallSource
                 form.Add(content, name, file.Name);
             }
 
+            /// <summary>
+            /// A value of a form, under its name, and a collection as one field per element, all under the same
+            /// name, which is how the application reads a collection back. A value left out and an empty
+            /// collection add no field, and an element that is null is added with no text, which is how the
+            /// application reads it back as null.
+            /// </summary>
+            /// <exception cref="ArgumentException">
+            /// The value is written as an object, or an element of a collection as a collection or an object: the
+            /// application reads neither back from the JSON they are written as.
+            /// </exception>
             public static void AddValue(MultipartFormDataContent form, string name, object? value)
             {
-                if (value != null)
+                if (value is IApiValue carried)
                 {
-                    form.Add(new StringContent(Text(value)!), name);
+                    AddValue(form, name, carried.Written);
+                    return;
+                }
+
+                if (value == null)
+                {
+                    return;
+                }
+
+                var written = JsonSerializer.SerializeToElement(value, value.GetType(), Options);
+                if (written.ValueKind == JsonValueKind.Object)
+                {
+                    throw new ArgumentException(
+                        $"The value '{name}' cannot travel in a form: it is written as an object, and a form " +
+                        "carries only values written as one text each.");
+                }
+
+                var texts = written.ValueKind == JsonValueKind.Array
+                    ? written.EnumerateArray().Select(element => Element(name, element, "a form", "field")).ToArray()
+                    : new[] {Written(written)};
+
+                foreach (var text in texts)
+                {
+                    form.Add(new StringContent(text), name);
                 }
             }
 
@@ -224,7 +288,7 @@ public static class ApiCallSource
             /// a collection, each written as a value on its own would be. What the serializer writes as an array is
             /// what is a collection, so that a value that is written as one text is never taken apart.
             /// </summary>
-            private static IEnumerable<string> Texts(object? value)
+            private static IEnumerable<string> Texts(string key, object? value)
             {
                 if (value == null)
                 {
@@ -233,15 +297,40 @@ public static class ApiCallSource
 
                 if (value is IApiValue carried)
                 {
-                    return Texts(carried.Written);
+                    return Texts(key, carried.Written);
                 }
 
                 var written = JsonSerializer.SerializeToElement(value, value.GetType(), Options);
 
-                return written.ValueKind == JsonValueKind.Array
-                    ? written.EnumerateArray().Select(Written).ToArray()
-                    : new[] {Written(written)};
+                return written.ValueKind switch
+                {
+                    JsonValueKind.Array => written.EnumerateArray()
+                        .Select(element => Element(key, element, "the query string", "key"))
+                        .ToArray(),
+                    JsonValueKind.Object => throw new ArgumentException(
+                        $"The value '{key}' cannot travel in the query string: it is written as an object, and the " +
+                        "query string carries only values written as one text each."),
+                    _ => new[] {Written(written)}
+                };
             }
+
+            /// <summary>
+            /// The text an element of a collection travels as, where a collection travels as its elements under
+            /// one repeated name: a query string or a form.
+            /// </summary>
+            private static string Element(string key, JsonElement element, string where, string repeated) =>
+                element.ValueKind switch
+            {
+                JsonValueKind.Null => string.Empty,
+                JsonValueKind.Array or JsonValueKind.Object => throw new ArgumentException(
+                    $"The collection '{key}' cannot travel in {where}: an element of it is written as " +
+                    $"{WrittenAs(element)}, and repeating the {repeated} carries only elements written as one text " +
+                    "each."),
+                _ => Written(element)
+            };
+
+            private static string WrittenAs(JsonElement written) =>
+                written.ValueKind == JsonValueKind.Array ? "a collection" : "an object";
 
             private static string Written(JsonElement written) =>
                 written.ValueKind == JsonValueKind.String ? written.GetString()! : written.GetRawText();

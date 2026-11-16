@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading.Tasks;
 using IOKode.WireShape.AspNetCore;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -217,11 +219,245 @@ public class WrittenClientTests
         Assert.Equal("?page=2", query);
     }
 
+    /// <summary>A pair with no text, which is how the application reads an element back as null.</summary>
+    [Fact]
+    public void ANullElementOfACollectionInAQuery_ShouldBeWrittenWithNoText()
+    {
+        // Arrange
+        var tags = new[] {"red", null};
+
+        // Act
+        var query = Query(("tags", tags));
+
+        // Assert
+        Assert.Equal("?tags=red&tags=", query);
+    }
+
+    /// <summary>
+    /// Repeating the key carries only elements written as one text each, and writing anything else would hand
+    /// the application a value it reads as something else.
+    /// </summary>
+    [Fact]
+    public void ACollectionOfCollectionsInAQuery_ShouldBeRefused()
+    {
+        // Arrange
+        var values = new[] {new[] {"a", "b"}, new[] {"c"}};
+
+        // Act
+        var writing = () => Query(("values", values));
+
+        // Assert
+        var refused = Assert.Throws<ArgumentException>(writing);
+        Assert.Equal(
+            "The collection 'values' cannot travel in the query string: an element of it is written as a " +
+            "collection, and repeating the key carries only elements written as one text each.",
+            refused.Message);
+    }
+
+    [Fact]
+    public void ACollectionOfObjectsInAQuery_ShouldBeRefused()
+    {
+        // Arrange
+        var lines = Array.CreateInstance(Type(nameof(Consignment)), 1);
+        lines.SetValue(Activator.CreateInstance(Type(nameof(Consignment))), 0);
+
+        // Act
+        var writing = () => Query(("lines", lines));
+
+        // Assert
+        var refused = Assert.Throws<ArgumentException>(writing);
+        Assert.Equal(
+            "The collection 'lines' cannot travel in the query string: an element of it is written as an " +
+            "object, and repeating the key carries only elements written as one text each.",
+            refused.Message);
+    }
+
+    /// <summary>
+    /// The application reads an object in the query string from a key per member, not from the JSON it is
+    /// written as, so writing it would hand over no value at all.
+    /// </summary>
+    [Fact]
+    public void AnObjectInAQuery_ShouldBeRefused()
+    {
+        // Arrange
+        var consignment = Activator.CreateInstance(Type(nameof(Consignment)));
+
+        // Act
+        var writing = () => Query(("consignment", consignment));
+
+        // Assert
+        var refused = Assert.Throws<ArgumentException>(writing);
+        Assert.Equal(
+            "The value 'consignment' cannot travel in the query string: it is written as an object, and the query " +
+            "string carries only values written as one text each.",
+            refused.Message);
+    }
+
+    /// <summary>
+    /// The application reads neither back from the JSON they are written as, so writing them would hand over a
+    /// value that is not the one given.
+    /// </summary>
+    [Fact]
+    public void ACollectionInARoute_ShouldBeRefused()
+    {
+        // Act
+        var writing = () => Segment(new[] {"a", "b"});
+
+        // Assert
+        var refused = Assert.Throws<ArgumentException>(writing);
+        Assert.Equal(
+            "A value cannot travel in a route: it is written as a collection, and a route carries only values " +
+            "written as one text each.",
+            refused.Message);
+    }
+
+    [Fact]
+    public void AnObjectInARoute_ShouldBeRefused()
+    {
+        // Act
+        var writing = () => Segment(Activator.CreateInstance(Type(nameof(Consignment)))!);
+
+        // Assert
+        var refused = Assert.Throws<ArgumentException>(writing);
+        Assert.Equal(
+            "A value cannot travel in a route: it is written as an object, and a route carries only values " +
+            "written as one text each.",
+            refused.Message);
+    }
+
+    /// <summary>The application reads an object in a form from a field per member, not from its JSON.</summary>
+    [Fact]
+    public void AnObjectInAForm_ShouldBeRefused()
+    {
+        // Arrange
+        var consignment = Activator.CreateInstance(Type(nameof(Consignment)));
+
+        // Act
+        var writing = () => AddValue("consignment", consignment);
+
+        // Assert
+        var refused = Assert.Throws<ArgumentException>(writing);
+        Assert.Equal(
+            "The value 'consignment' cannot travel in a form: it is written as an object, and a form carries only " +
+            "values written as one text each.",
+            refused.Message);
+    }
+
+    [Fact]
+    public async Task AValueInAForm_ShouldBeWrittenAsItIsInABody()
+    {
+        // Arrange
+        var shipped = New(nameof(ShippedOn), new DateOnly(2026, 10, 29));
+
+        // Act
+        var form = AddValue("shipped", shipped);
+
+        // Assert
+        var field = Assert.Single(form);
+        Assert.Equal("2026-10-29", await field.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// One field per element under the same name, which is how the application reads a collection back, with a
+    /// null element as a field with no text and each element written as a value on its own would be.
+    /// </summary>
+    [Fact]
+    public async Task ACollectionInAForm_ShouldBeAFieldPerElementUnderTheSameName()
+    {
+        // Arrange
+        var shipped = Array.CreateInstance(typeof(Nullable<>).MakeGenericType(Type(nameof(ShippedOn))), 3);
+        shipped.SetValue(New(nameof(ShippedOn), new DateOnly(2026, 10, 29)), 0);
+        shipped.SetValue(null, 1);
+        shipped.SetValue(New(nameof(ShippedOn), new DateOnly(2026, 10, 30)), 2);
+
+        // Act
+        var form = AddValue("shipped", shipped);
+
+        // Assert
+        var fields = new List<(string?, string)>();
+        foreach (var field in form)
+        {
+            fields.Add((field.Headers.ContentDisposition!.Name, await field.ReadAsStringAsync()));
+        }
+
+        Assert.Equal(
+            new (string?, string)[] {("shipped", "2026-10-29"), ("shipped", ""), ("shipped", "2026-10-30")},
+            fields);
+    }
+
+    [Fact]
+    public void AnEmptyCollectionInAForm_ShouldAddNoField()
+    {
+        // Act
+        var form = AddValue("tags", Array.Empty<string>());
+
+        // Assert
+        Assert.Empty(form);
+    }
+
+    [Fact]
+    public void ACollectionOfCollectionsInAForm_ShouldBeRefused()
+    {
+        // Arrange
+        var values = new[] {new[] {"a", "b"}, new[] {"c"}};
+
+        // Act
+        var writing = () => AddValue("values", values);
+
+        // Assert
+        var refused = Assert.Throws<ArgumentException>(writing);
+        Assert.Equal(
+            "The collection 'values' cannot travel in a form: an element of it is written as a collection, and " +
+            "repeating the field carries only elements written as one text each.",
+            refused.Message);
+    }
+
+    [Fact]
+    public void ACollectionOfObjectsInAForm_ShouldBeRefused()
+    {
+        // Arrange
+        var lines = Array.CreateInstance(Type(nameof(Consignment)), 1);
+        lines.SetValue(Activator.CreateInstance(Type(nameof(Consignment))), 0);
+
+        // Act
+        var writing = () => AddValue("lines", lines);
+
+        // Assert
+        var refused = Assert.Throws<ArgumentException>(writing);
+        Assert.Equal(
+            "The collection 'lines' cannot travel in a form: an element of it is written as an object, and " +
+            "repeating the field carries only elements written as one text each.",
+            refused.Message);
+    }
+
+    private static MultipartFormDataContent AddValue(string name, object? value)
+    {
+        var form = new MultipartFormDataContent();
+
+        try
+        {
+            Type("ApiCall").GetMethod("AddValue")!.Invoke(null, new[] {form, name, value});
+        }
+        catch (TargetInvocationException invoked)
+        {
+            throw invoked.InnerException!;
+        }
+
+        return form;
+    }
+
     private static string Query(params (string Key, object? Value)[] values)
     {
         var pairs = values.Select(value => new KeyValuePair<string, object?>(value.Key, value.Value)).ToList();
 
-        return (string) Type("ApiCall").GetMethod("Query")!.Invoke(null, new object[] {pairs})!;
+        try
+        {
+            return (string) Type("ApiCall").GetMethod("Query")!.Invoke(null, new object[] {pairs})!;
+        }
+        catch (TargetInvocationException invoked)
+        {
+            throw invoked.InnerException!;
+        }
     }
 
     private static string Segment(object value)
