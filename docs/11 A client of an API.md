@@ -109,7 +109,7 @@ itself: no package to install and no version to keep in step. It holds:
 - what a value of the wire looks like from outside;
 - the refusal of a call, with the reason it gave;
 - the options everything is read and written with;
-- the making of a URL, a query, a body and a form, with a value in a route or a query written as it is in a body.
+- the making of a URL, a query, a body and a form, with a value in a route or a query written as it is in a body, and a collection in a query as one pair per element under the same key.
 
 And one attribute, for a kind added to a hierarchy that another client declares. That hierarchy was written without
 knowing the kind existed, so the kind is the one to say it.

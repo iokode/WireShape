@@ -135,11 +135,16 @@ public static class ApiCallSource
 
             public static string Segment(object? value) => Uri.EscapeDataString(Text(value) ?? string.Empty);
 
+            /// <summary>
+            /// The query a call carries, with a value under its key and a collection as one pair per element, all
+            /// under the same key, which is how the application reads a collection back. A value left out and an
+            /// empty collection write no pair.
+            /// </summary>
             public static string Query(IReadOnlyList<KeyValuePair<string, object?>> values)
             {
                 var written = values
-                    .Where(value => value.Value != null)
-                    .Select(value => $"{Uri.EscapeDataString(value.Key)}={Uri.EscapeDataString(Text(value.Value)!)}")
+                    .SelectMany(value => Texts(value.Value)
+                        .Select(text => $"{Uri.EscapeDataString(value.Key)}={Uri.EscapeDataString(text)}"))
                     .ToArray();
 
                 return written.Length == 0 ? string.Empty : "?" + string.Join("&", written);
@@ -213,6 +218,30 @@ public static class ApiCallSource
                 IApiValue carried => Text(carried.Written),
                 _ => Written(JsonSerializer.SerializeToElement(value, value.GetType(), Options))
             };
+
+            /// <summary>
+            /// The texts a value travels as in a query: none for no value, one for a value, and one per element for
+            /// a collection, each written as a value on its own would be. What the serializer writes as an array is
+            /// what is a collection, so that a value that is written as one text is never taken apart.
+            /// </summary>
+            private static IEnumerable<string> Texts(object? value)
+            {
+                if (value == null)
+                {
+                    return Array.Empty<string>();
+                }
+
+                if (value is IApiValue carried)
+                {
+                    return Texts(carried.Written);
+                }
+
+                var written = JsonSerializer.SerializeToElement(value, value.GetType(), Options);
+
+                return written.ValueKind == JsonValueKind.Array
+                    ? written.EnumerateArray().Select(Written).ToArray()
+                    : new[] {Written(written)};
+            }
 
             private static string Written(JsonElement written) =>
                 written.ValueKind == JsonValueKind.String ? written.GetString()! : written.GetRawText();

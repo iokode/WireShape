@@ -161,6 +161,69 @@ public class WrittenClientTests
         Assert.Null(read);
     }
 
+    /// <summary>
+    /// One pair per element under the same key, which is how the application reads a collection back: an array
+    /// under the key would be read as a single element holding the array.
+    /// </summary>
+    [Fact]
+    public void ACollectionInAQuery_ShouldBeAPairPerElementUnderTheSameKey()
+    {
+        // Arrange
+        var tags = new[] {"red", "a+b"};
+
+        // Act
+        var query = Query(("tags", tags), ("page", 2));
+
+        // Assert
+        Assert.Equal("?tags=red&tags=a%2Bb&page=2", query);
+    }
+
+    /// <summary>Each element is written as a value on its own would be.</summary>
+    [Fact]
+    public void AnElementOfACollectionInAQuery_ShouldBeWrittenAsAValueOnItsOwn()
+    {
+        // Arrange
+        var changes = Array.CreateInstance(Type(nameof(Change)), 2);
+        changes.SetValue(Enum.ToObject(Type(nameof(Change)), 1), 0);
+        changes.SetValue(Enum.ToObject(Type(nameof(Change)), 2), 1);
+
+        var shipped = Array.CreateInstance(Type(nameof(ShippedOn)), 1);
+        shipped.SetValue(New(nameof(ShippedOn), new DateOnly(2026, 10, 29)), 0);
+
+        // Act
+        var query = Query(("changes", changes), ("shipped", shipped));
+
+        // Assert
+        Assert.Equal("?changes=a%C3%B1adido&changes=a%2Bb&shipped=2026-10-29", query);
+    }
+
+    [Fact]
+    public void AnEmptyCollectionInAQuery_ShouldWriteNoPair()
+    {
+        // Act
+        var query = Query(("tags", Array.Empty<string>()), ("page", 2));
+
+        // Assert
+        Assert.Equal("?page=2", query);
+    }
+
+    [Fact]
+    public void ANullCollectionInAQuery_ShouldBeLeftOut()
+    {
+        // Act
+        var query = Query(("tags", null), ("page", 2));
+
+        // Assert
+        Assert.Equal("?page=2", query);
+    }
+
+    private static string Query(params (string Key, object? Value)[] values)
+    {
+        var pairs = values.Select(value => new KeyValuePair<string, object?>(value.Key, value.Value)).ToList();
+
+        return (string) Type("ApiCall").GetMethod("Query")!.Invoke(null, new object[] {pairs})!;
+    }
+
     private static string Segment(object value)
     {
         try
