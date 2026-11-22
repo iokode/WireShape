@@ -107,7 +107,7 @@ itself: no package to install and no version to keep in step. It holds:
 
 - the file a call carries and the one it answers with;
 - what a value of the wire looks like from outside;
-- the refusal of a call, with the reason it gave;
+- the refusal of a call, with the reason it gave and the messages about each field of the request, keyed by the field as the application named it;
 - the options everything is read and written with;
 - the making of a URL, a query, a body and a form, with a value in a route or a query written as it is in a body, and a collection in a query or a form as one pair or field per element under the same name, a null element with no text; an object, a collection of collections and a collection of objects are refused there, and an object and a collection in a route, because the application reads none of them back from the JSON they are written as.
 

@@ -58,10 +58,14 @@ public static class ApiCallSource
         }
 
         /// <summary>
-        /// A call the application refused, with the reason it gave. The reason is written for whoever asked, so
-        /// it is the one to show.
+        /// A call the application refused, with the reason it gave and what it said about each field of the
+        /// request. Both are written for whoever asked, so they are the ones to show.
         /// </summary>
-        public sealed class ApiException(HttpStatusCode status, string? title, string? detail)
+        public sealed class ApiException(
+            HttpStatusCode status,
+            string? title,
+            string? detail,
+            IReadOnlyDictionary<string, IReadOnlyList<string>> errors)
             : Exception(detail ?? title ?? $"The request was answered with {(int) status}.")
         {
             public HttpStatusCode Status { get; } = status;
@@ -69,6 +73,12 @@ public static class ApiCallSource
             public string? Title { get; } = title;
 
             public string? Detail { get; } = detail;
+
+            /// <summary>
+            /// The messages about each field of the request, keyed by the field as the application named it, so
+            /// that each can be shown next to its field. Empty when the application said nothing about any.
+            /// </summary>
+            public IReadOnlyDictionary<string, IReadOnlyList<string>> Errors { get; } = errors;
         }
 
         /// <summary>
@@ -248,7 +258,15 @@ public static class ApiCallSource
                 {
                 }
 
-                throw new ApiException(response.StatusCode, problem?.Title, problem?.Detail);
+                var errors = problem?.Errors?.ToDictionary(
+                    field => field.Key,
+                    field => (IReadOnlyList<string>) field.Value);
+
+                throw new ApiException(
+                    response.StatusCode,
+                    problem?.Title,
+                    problem?.Detail,
+                    errors ?? new Dictionary<string, IReadOnlyList<string>>());
             }
 
             public static async Task<T> ReadAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken)
@@ -347,6 +365,10 @@ public static class ApiCallSource
 
             [JsonPropertyName("status")]
             public int? Status { get; init; }
+
+            /// <summary>The messages about each field of the request, keyed by the field.</summary>
+            [JsonPropertyName("errors")]
+            public Dictionary<string, string[]>? Errors { get; init; }
         }
         """;
 
