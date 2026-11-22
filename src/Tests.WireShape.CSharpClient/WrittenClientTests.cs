@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using IOKode.WireShape.AspNetCore;
 using Microsoft.CodeAnalysis;
@@ -429,6 +432,76 @@ public class WrittenClientTests
             "repeating the field carries only elements written as one text each.",
             refused.Message);
     }
+
+    /// <summary>
+    /// What the application said about each field of the request, keyed by the field as it named it, so that
+    /// whoever calls can put each message next to its field.
+    /// </summary>
+    [Fact]
+    public async Task ARefusalThatSaysWhatIsWrongWithEachField_ShouldCarryTheMessagesOfEachField()
+    {
+        // Arrange
+        var answer = Answered(
+            HttpStatusCode.BadRequest,
+            """
+            {
+              "title": "One or more validation errors occurred.",
+              "status": 400,
+              "errors": {
+                "name": ["The name is required."],
+                "Lines[0].Code": ["The code must have three letters.", "The code must be in capitals."]
+              }
+            }
+            """);
+
+        // Act
+        var refused = await EnsureAnswered(answer);
+
+        // Assert
+        var errors = Errors(refused);
+        Assert.Equal(new[] {"Lines[0].Code", "name"}, errors.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(new[] {"The name is required."}, errors["name"]);
+        Assert.Equal(
+            new[] {"The code must have three letters.", "The code must be in capitals."},
+            errors["Lines[0].Code"]);
+        Assert.Equal("One or more validation errors occurred.", refused.Message);
+    }
+
+    [Fact]
+    public async Task ARefusalThatSaysNothingAboutAnyField_ShouldCarryNoMessagesOfFields()
+    {
+        // Arrange
+        var answer = Answered(
+            HttpStatusCode.Conflict,
+            """{"title": "Conflict", "detail": "The shipment has already left.", "status": 409}""");
+
+        // Act
+        var refused = await EnsureAnswered(answer);
+
+        // Assert
+        Assert.Empty(Errors(refused));
+        Assert.Equal("The shipment has already left.", refused.Message);
+    }
+
+    private static HttpResponseMessage Answered(HttpStatusCode status, string problem) => new(status)
+    {
+        Content = new StringContent(problem, Encoding.UTF8, "application/problem+json")
+    };
+
+    private static async Task<Exception> EnsureAnswered(HttpResponseMessage response)
+    {
+        var ensuring = (Task) Type("ApiCall")
+            .GetMethod("EnsureAnsweredAsync")!
+            .Invoke(null, new object[] {response, CancellationToken.None})!;
+
+        var refused = await Assert.ThrowsAnyAsync<Exception>(() => ensuring);
+        Assert.IsType(Type("ApiException"), refused);
+
+        return refused;
+    }
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>> Errors(Exception refused) =>
+        (IReadOnlyDictionary<string, IReadOnlyList<string>>) refused.GetType().GetProperty("Errors")!.GetValue(refused)!;
 
     private static MultipartFormDataContent AddValue(string name, object? value)
     {
