@@ -279,6 +279,95 @@ public class FiltersTests
         Assert.Empty(unwrapping.Noted);
     }
 
+    /// <summary>
+    /// A member that may be absent but not null is offered as what it is and not as nothing at all: null is not
+    /// one of its values, and absent is said elsewhere.
+    /// </summary>
+    [Fact]
+    public void AMemberThatMayBeAbsentButNotNothing_ShouldNotBeSaidToOfferNothingAtAll()
+    {
+        // Arrange
+        var schema = new OpenApiSchema
+        {
+            Properties = new Dictionary<string, IOpenApiSchema>
+            {
+                ["code"] = new OpenApiSchemaReference("Shipping.TrackingCode")
+            }
+        };
+
+        var filter = new NothingAtAllSchemaFilter(BuildWireOfOptionalCodes());
+
+        // Act
+        filter.Apply(schema, BuildContext(typeof(Consignment)));
+
+        // Assert
+        Assert.IsType<OpenApiSchemaReference>(schema.Properties["code"]);
+    }
+
+    [Fact]
+    public void AMemberThatMayBeAbsent_ShouldNotBeRequired()
+    {
+        // Arrange
+        var schema = new OpenApiSchema {Required = new HashSet<string> {"code", "copies"}};
+        var filter = new OptionalSchemaFilter(BuildWireOfOptionalCodes());
+
+        // Act
+        filter.Apply(schema, BuildContext(typeof(Reprint)));
+
+        // Assert
+        Assert.Equal(new[] {"copies"}, schema.Required);
+    }
+
+    /// <summary>What a type adds to the one it derives from is written apart, and so is what it requires.</summary>
+    [Fact]
+    public void AMemberThatMayBeAbsentInAPartOfTheSchema_ShouldNotBeRequiredThere()
+    {
+        // Arrange
+        var part = new OpenApiSchema {Required = new HashSet<string> {"code", "copies"}};
+        var schema = new OpenApiSchema {AllOf = new List<IOpenApiSchema> {new OpenApiSchemaReference("Shipping.Base"), part}};
+        var filter = new OptionalSchemaFilter(BuildWireOfOptionalCodes());
+
+        // Act
+        filter.Apply(schema, BuildContext(typeof(Reprint)));
+
+        // Assert
+        Assert.Equal(new[] {"copies"}, part.Required);
+    }
+
+    /// <summary>
+    /// The generator requires a member it is told to read as required where it is never null, and what it is
+    /// told does not say that the member may be left out.
+    /// </summary>
+    [Fact]
+    public void AMemberThatMayBeAbsent_ShouldNotBeRequiredWhereTheGeneratorWouldRequireIt()
+    {
+        // Arrange
+        var schemas = new SchemaRepository();
+        var generator = new SchemaGenerator(
+            new SchemaGeneratorOptions
+            {
+                SchemaIdSelector = GetName,
+                NonNullableReferenceTypesAsRequired = true,
+                SchemaFilters = {new OptionalSchemaFilter(BuildWireOfOptionalCodes())}
+            },
+            new JsonSerializerDataContractResolver(new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+
+        // Act
+        generator.GenerateSchema(typeof(Reprint), schemas);
+
+        // Assert
+        var written = Assert.IsType<OpenApiSchema>(schemas.Schemas["Shipping.Reprint"]);
+        Assert.Equal(new[] {"copies"}, written.Required);
+    }
+
+    private static Wire BuildWireOfOptionalCodes()
+    {
+        var declaring = new WireBuilder();
+        declaring.GetDeclarer("application").AddOptional<TrackingCode>();
+
+        return declaring.Build(BuildWriter(new TrackingCodeJsonConverter()));
+    }
+
     private static Wire BuildWireOfParcels()
     {
         var declaring = new WireBuilder();

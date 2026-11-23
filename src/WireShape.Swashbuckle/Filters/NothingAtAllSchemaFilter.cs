@@ -21,7 +21,7 @@ public sealed class NothingAtAllSchemaFilter(Wire wire) : ISchemaFilter
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {
         var optional = (wire.GetMembers(context.Type) ?? Array.Empty<Member>())
-            .Where(member => member.IsOptional)
+            .Where(member => member.IsNullable)
             .Select(member => member.Name)
             .ToHashSet();
 

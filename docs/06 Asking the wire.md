@@ -71,24 +71,27 @@ Null is an answer: the type is written as it stands, and the writer describes it
 
 ```csharp
 wire.GetMembers(typeof(Booking));
-// reference  BookingReference        IsOptional: false   IsAnswerOnly: false
-// passenger  PassengerRef            IsOptional: false   IsAnswerOnly: false
+// reference  BookingReference        IsNullable: false   IsOptional: false   IsAnswerOnly: false
+// passenger  PassengerRef            IsNullable: false   IsOptional: false   IsAnswerOnly: false
 // segments   IReadOnlyList<Segment>
 // total      Money
 // cabin      CabinClass
-// boarding   BoardingAt?             IsOptional: true
+// boarding   BoardingAt?             IsNullable: true    IsOptional: false
+
+wire.GetMembers(typeof(BookingChange));
+// departsOn  Amended<DepartsOn>      IsNullable: false   IsOptional: true
+// remarks    Amended<string?>        IsNullable: true    IsOptional: true
 ```
 
 The members are asked of the writer, named as they travel. A `Members` declaration wins over that answer, for a
 type nothing can be asked about or one written by a converter that builds the object itself.
 
-- **`IsOptional`** is a nullable value type, or a reference whose nullable read state says it may be null.
+- **`IsNullable`** — it may travel as null: a nullable value type, or a reference whose nullable read state says it may be null. Of a member whose type disappears once written, it is what the type leaves behind that is asked.
+- **`IsOptional`** — it may be left out of what travels, because its type is [declared so](03%20Declaring%20a%20form.md#a-member-that-may-be-left-out). The writer never says it, and its nullability has nothing to do with it: left out and null are two different things on the wire.
 - **`IsAnswerOnly`** is a member with no setter and no constructor parameter: one the answer carries and a caller
   cannot give. That is what a member worked out from the others looks like from outside.
 
-A declared member and an answered one are the same record, because they are the same facts: the name it travels
-under, what it carries, whether it may be absent, whether only an answer ever has it, and what declared it, where
-something did. Whoever reads them reads both the same way.
+A declared member and an answered one are the same record, because they are the same facts: the name it travels under, what it carries, whether it may be null, whether it may be absent, whether only an answer ever has it, and what declared it, where something did. Whoever reads them reads both the same way.
 
 Null is the answer where nobody declared the members and the writer could not say. It does not mean "it carries
 nothing": whoever asked has to say that it could not be told. That is why asking for everything that travels with

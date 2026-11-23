@@ -211,12 +211,22 @@ public abstract record Shape
 }
 
 /// <summary>
-/// One member of what travels: the name it travels under, what it carries, whether it may be absent, and whether
-/// it is only ever written by whoever answers, which is the case of a member worked out from the others.
+/// One member of what travels: the name it travels under, what it carries, whether it may travel as null, whether
+/// it may be absent, and whether it is only ever written by whoever answers, which is the case of a member worked
+/// out from the others.
 /// </summary>
+/// <remarks>
+/// Null and absent are two facts and not one. A member present with null says something, and a member left out
+/// may say something else: in a change, null is "make it nothing" and absent is "leave it as it is". A member
+/// can be either, both or neither.
+/// </remarks>
 /// <param name="Name">The name it travels under, which is not always the name it has in the code.</param>
 /// <param name="Type">What it carries.</param>
-/// <param name="IsOptional">Whether it may be absent from what travels, or travel as null.</param>
+/// <param name="IsNullable">Whether it may travel as null.</param>
+/// <param name="IsOptional">
+/// Whether it may be absent from what travels, which is the case of a member whose type is declared so: see
+/// <see cref="Declarer.AddOptional(Type)"/>.
+/// </param>
 /// <param name="IsAnswerOnly">
 /// Whether only an answer ever carries it: a member a caller cannot give, because it has no setter and no
 /// constructor parameter.
@@ -228,7 +238,8 @@ public abstract record Shape
 public sealed record Member(
     string Name,
     Type Type,
-    bool IsOptional,
+    bool IsNullable,
+    bool IsOptional = false,
     bool IsAnswerOnly = false,
     MemberInfo? Declared = null);
 

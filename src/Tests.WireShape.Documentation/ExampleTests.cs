@@ -110,6 +110,19 @@ public class ExampleTests
         Assert.False(amended.NeedsItsOwnName);
     }
 
+    /// <summary>Left out is one thing and null another, and only the remarks may be null.</summary>
+    [Fact]
+    public void AChangeThatMayLeaveAFieldOut_ShouldSayWhichMayBeLeftOutAndWhichMayBeNull()
+    {
+        // Act
+        var members = wire.GetMembers(typeof(BookingChange))!;
+
+        // Assert
+        Assert.Equal(
+            new[] {("departsOn", true, false), ("remarks", true, true)},
+            members.Select(member => (member.Name, member.IsOptional, member.IsNullable)));
+    }
+
     [Fact]
     public void WhatTheDocumentSays_ShouldBeWhatTheChaptersShow()
     {
@@ -175,6 +188,19 @@ public class ExampleTests
                 new ApiParameter("cabin", typeof(CabinClass), ApiParameterOrigin.Query, true)
             },
             Result = typeof(Booking)
+        },
+        new ApiAction
+        {
+            Method = "PATCH",
+            Route = "/bookings/{reference}",
+            Controller = "Bookings",
+            MethodName = "ChangeAsync",
+            Parameters = new[]
+            {
+                new ApiParameter("reference", typeof(BookingReference), ApiParameterOrigin.Route, false),
+                new ApiParameter("change", typeof(BookingChange), ApiParameterOrigin.Body, false)
+            },
+            Result = null
         },
         new ApiAction
         {

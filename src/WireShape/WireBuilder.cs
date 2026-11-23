@@ -6,7 +6,7 @@ namespace IOKode.WireShape;
 
 /// <summary>
 /// What is declared of a wire before there is a wire: the written form of the types a converter of their own
-/// takes over, and what each base turns out to be.
+/// takes over, what each base turns out to be, and which types may be absent where a member carries one.
 /// </summary>
 /// <remarks>
 /// Nothing is read from here. A wire answers, and this one only declares, so what a wire says cannot change
@@ -31,6 +31,9 @@ public sealed class WireBuilder
 
     private readonly List<IEnumerationSource> wordSources = new();
     private readonly Dictionary<Type, Dictionary<object, (string Word, string Declarer)>> byEnumeration = new();
+
+    private readonly List<IOptionalSource> optionalSources = new();
+    private readonly HashSet<Type> optional = new();
 
     /// <summary>
     /// Whoever declares, under this name: everything declared through what this gives back is declared by it.
@@ -125,6 +128,10 @@ public sealed class WireBuilder
 
     internal void Declare(IEnumerationSource source) => wordSources.Add(source);
 
+    internal void Declare(Type optionalType) => optional.Add(optionalType);
+
+    internal void Declare(IOptionalSource source) => optionalSources.Add(source);
+
     /// <summary>
     /// The wire these declarations and this writer make: a wire that answers and that nobody can declare on any
     /// more.
@@ -169,6 +176,8 @@ public sealed class WireBuilder
                 enumeration => (IReadOnlyDictionary<object, string>) enumeration.Value.ToDictionary(
                     value => value.Key,
                     value => value.Value.Word)),
-            wordSources.ToArray());
+            wordSources.ToArray(),
+            new HashSet<Type>(optional),
+            optionalSources.ToArray());
     }
 }

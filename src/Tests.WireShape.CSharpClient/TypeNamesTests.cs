@@ -94,7 +94,7 @@ public class TypeNamesTests
         var names = new TypeNames(Shipments.Of());
 
         // Act
-        var name = names.Of(typeof(TrackingCode), isOptional: true);
+        var name = names.Of(typeof(TrackingCode), isNullable: true);
 
         // Assert
         Assert.Equal("TrackingCode?", name);

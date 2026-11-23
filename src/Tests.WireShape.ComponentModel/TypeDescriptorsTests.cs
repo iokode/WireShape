@@ -88,8 +88,8 @@ public class TypeDescriptorsTests
         var declarer = declaring.GetDeclarer("application");
         declarer.Add(typeof(Consignee), new Shape.Members(new[]
         {
-            new Member("name", typeof(string), IsOptional: false),
-            new Member("street", typeof(string), IsOptional: false)
+            new Member("name", typeof(string), IsNullable: false),
+            new Member("street", typeof(string), IsNullable: false)
         }));
         var wire = declaring.Build(serializer);
 

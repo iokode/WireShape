@@ -17,7 +17,8 @@ namespace IOKode.WireShape;
 /// <para>
 /// Only a form keeps the name it was declared under. A kind and a word are read back by what tells them apart
 /// and never by who said so, so the name is used here to say which two declarers disagreed and is kept nowhere
-/// afterwards.
+/// afterwards. That a member of a type may be absent is a fact nobody can disagree with, so it keeps no name
+/// either.
 /// </para>
 /// </remarks>
 public sealed class Declarer
@@ -97,4 +98,34 @@ public sealed class Declarer
     /// not a list. Where two sources can answer about one value the first one added answers.
     /// </summary>
     public void AddWordSource(IEnumerationSource source) => declaring.Declare(source);
+
+    /// <summary>
+    /// Declares that a member of this type may be absent from what travels, whatever the form of the type and
+    /// whatever the language says of its nullability.
+    /// </summary>
+    /// <remarks>
+    /// A fact of its own and not part of a form, because some types exist so that leaving them out means
+    /// something — a change that leaves a field as it was — and that is so of a type that disappears once written
+    /// as much as of one that travels as a text, as another type or as an object. Tying it to one form would
+    /// leave the others without it.
+    /// <para>
+    /// Absent is not null. A member of such a type left out and the same member present with null are two
+    /// different things on the wire, and whether null is one of its values is said of the member apart.
+    /// </para>
+    /// <para>
+    /// Saying it twice is saying it once: the fact is that it may be absent, and there is no other answer for a
+    /// second declarer to disagree with.
+    /// </para>
+    /// </remarks>
+    public void AddOptional(Type type) => declaring.Declare(type);
+
+    /// <inheritdoc cref="AddOptional(Type)"/>
+    public void AddOptional<T>() => AddOptional(typeof(T));
+
+    /// <summary>
+    /// Takes in somewhere it can be read that a member of a type may be absent, for the family recognized by a
+    /// convention and not by a list. A member of a type may be absent where any source added says so, there
+    /// being nothing a source could say against it.
+    /// </summary>
+    public void AddOptionalSource(IOptionalSource source) => declaring.Declare(source);
 }

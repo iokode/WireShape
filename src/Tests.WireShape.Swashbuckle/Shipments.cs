@@ -12,6 +12,9 @@ public readonly record struct TrackingCode(string Value);
 
 public sealed record Consignment(TrackingCode Code, string? Instructions);
 
+/// <summary>A reprint of the labels of a consignment, which may leave its code out.</summary>
+public sealed record Reprint(TrackingCode Code, int Copies);
+
 public enum CarrierService
 {
     NextDay = 1,

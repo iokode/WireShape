@@ -46,12 +46,15 @@ the base. `HierarchyKind`, and `Kind` where the base is already known.
 client has to give the type a place of its own. `Structure.NeedsItsOwnName`.
 [Asking the wire](06%20Asking%20the%20wire.md#whether-a-type-needs-a-name-of-its-own).
 
+**Nullable member** — a member that may travel as null. `Member.IsNullable`. [Asking the wire](06%20Asking%20the%20wire.md#what-a-type-carries).
+
+**Optional member** — a member that may be left out of what travels, because its type is declared so; left out is not null. `Member.IsOptional`, declared with `Declarer.AddOptional` or read from an `IOptionalSource`. [Declaring a form](03%20Declaring%20a%20form.md#a-member-that-may-be-left-out).
+
 **Self-explanatory** — a carrier the reader's language has a kind of its own for, such as a date or an instant,
 so that no name of ours goes over it. `Carrier.IsSelfExplanatory`.
 [Declaring a form](03%20Declaring%20a%20form.md#what-a-carrier-is).
 
-**Source** — whatever a form, a kind or a word can be read from instead of being declared one by one.
-`IShapeSource`, `IHierarchySource`, `IEnumerationSource`.
+**Source** — whatever a form, a kind, a word or whether a member may be left out can be read from instead of being declared one by one. `IShapeSource`, `IHierarchySource`, `IEnumerationSource`, `IOptionalSource`.
 [Reading declarations from a source](04%20Reading%20declarations%20from%20a%20source.md).
 
 **Structure** — what a type comes out as, in a set that names every type it mentions: carried by another type,

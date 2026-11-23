@@ -166,6 +166,108 @@ public class WrittenClientTests
         Assert.Null(read);
     }
 
+    /// <summary>Left out is not null: a member left out does not travel at all.</summary>
+    [Fact]
+    public void AMemberThatMayBeAbsentLeftOut_ShouldNotTravel()
+    {
+        // Arrange
+        var amendment = Activator.CreateInstance(Type(nameof(Amendment)))!;
+
+        // Act
+        var json = JsonSerializer.Serialize(amendment, amendment.GetType(), Options);
+
+        // Assert
+        Assert.Equal("{}", json);
+    }
+
+    /// <summary>Given null is not left out: null travels, as the value it was given.</summary>
+    [Fact]
+    public void AMemberThatMayBeAbsentGivenNull_ShouldTravelAsNull()
+    {
+        // Arrange
+        var amendment = Activator.CreateInstance(Type(nameof(Amendment)))!;
+        Set(amendment, "Instructions", Optional(typeof(string), null));
+
+        // Act
+        var json = JsonSerializer.Serialize(amendment, amendment.GetType(), Options);
+
+        // Assert
+        Assert.Equal("""{"instructions":null}""", json);
+    }
+
+    [Fact]
+    public void AMemberThatMayBeAbsentGivenAValue_ShouldTravelAsTheValue()
+    {
+        // Arrange
+        var amendment = Activator.CreateInstance(Type(nameof(Amendment)))!;
+        Set(amendment, "Code", Optional(Type(nameof(TrackingCode)), New(nameof(TrackingCode), "QX7F2P")));
+        Set(amendment, "Instructions", Optional(typeof(string), "At the back door"));
+
+        // Act
+        var json = JsonSerializer.Serialize(amendment, amendment.GetType(), Options);
+
+        // Assert
+        Assert.Equal("""{"code":"QX7F2P","instructions":"At the back door"}""", json);
+    }
+
+    /// <summary>
+    /// Null is given by assigning it, as any other value is, which is how whoever calls says "make it nothing".
+    /// </summary>
+    [Fact]
+    public void NullAssignedToAMemberThatMayBeAbsent_ShouldTravelAsNull()
+    {
+        // Arrange
+        var amendment = Type("Assigning").GetMethod("Null")!.Invoke(null, null)!;
+
+        // Act
+        var json = JsonSerializer.Serialize(amendment, amendment.GetType(), Options);
+
+        // Assert
+        Assert.Equal("""{"instructions":null}""", json);
+    }
+
+    [Fact]
+    public void AMemberThatMayBeAbsentAndDoesNotArrive_ShouldBeReadAsLeftOut()
+    {
+        // Act
+        var amendment = JsonSerializer.Deserialize("{}", Type(nameof(Amendment)), Options)!;
+
+        // Assert
+        Assert.False(IsGiven(Get(amendment, "Instructions")));
+    }
+
+    [Fact]
+    public void AMemberThatMayBeAbsentAndArrivesAsNull_ShouldBeReadAsGivenNull()
+    {
+        // Act
+        var amendment = JsonSerializer.Deserialize("""{"instructions":null}""", Type(nameof(Amendment)), Options)!;
+
+        // Assert
+        var instructions = Get(amendment, "Instructions");
+        Assert.True(IsGiven(instructions));
+        Assert.Null(instructions.GetType().GetProperty("Value")!.GetValue(instructions));
+    }
+
+    [Fact]
+    public void AMemberThatMayBeAbsentLeftOutInAQuery_ShouldWriteNoPair()
+    {
+        // Act
+        var query = Query(("code", Optional(Type(nameof(TrackingCode)), null, given: false)), ("page", 2));
+
+        // Assert
+        Assert.Equal("?page=2", query);
+    }
+
+    [Fact]
+    public void AMemberThatMayBeAbsentGivenInAQuery_ShouldBeWrittenAsWhatItWasGiven()
+    {
+        // Act
+        var query = Query(("code", Optional(Type(nameof(TrackingCode)), New(nameof(TrackingCode), "QX7F2P"))));
+
+        // Assert
+        Assert.Equal("?code=QX7F2P", query);
+    }
+
     /// <summary>
     /// One pair per element under the same key, which is how the application reads a collection back: an array
     /// under the key would be read as a single element holding the array.
@@ -547,6 +649,24 @@ public class WrittenClientTests
 
     private static object New(string type, object value) => Activator.CreateInstance(Type(type), value)!;
 
+    /// <summary>A member that may be left out, given this value, or left out where it was not given.</summary>
+    private static object Optional(Type holding, object? value, bool given = true)
+    {
+        var optional = written.Value.GetType("Shipping.Client.ApiOptional`1", throwOnError: true)!
+            .MakeGenericType(holding);
+
+        return given ? Activator.CreateInstance(optional, value)! : Activator.CreateInstance(optional)!;
+    }
+
+    private static bool IsGiven(object optional) =>
+        (bool) optional.GetType().GetProperty("IsGiven")!.GetValue(optional)!;
+
+    private static void Set(object instance, string member, object value) =>
+        instance.GetType().GetProperty(member)!.SetValue(instance, value);
+
+    private static object Get(object instance, string member) =>
+        instance.GetType().GetProperty(member)!.GetValue(instance)!;
+
     private static JsonSerializerOptions Options =>
         (JsonSerializerOptions) Type("ApiJson").GetField("Options")!.GetValue(null)!;
 
@@ -587,7 +707,10 @@ public class WrittenClientTests
         var model = new ApiModel(Array.Empty<ApiAction>(), types, Array.Empty<HierarchyKind>(), "kind");
         var names = new TypeNames(model);
 
-        foreach (var type in new[] {typeof(Consignment), typeof(ShippedOn), typeof(Insured), typeof(Change)})
+        foreach (var type in new[]
+                 {
+                     typeof(Consignment), typeof(Amendment), typeof(ShippedOn), typeof(Insured), typeof(Change)
+                 })
         {
             names.Of(type);
         }
@@ -595,7 +718,17 @@ public class WrittenClientTests
         var dtos = new DtoWriter(model, names);
         dtos.WritePending();
 
-        var source = ClientSource.Head("Shipping.Client") + ApiCallSource.Write(model.Discriminator) + dtos.Written;
+        // What whoever calls writes to give a member that may be left out null, compiled with the rest so that
+        // it is known to compile as it is written.
+        const string assigning = """
+            public static class Assigning
+            {
+                public static Amendment Null() => new() {Instructions = null};
+            }
+            """;
+
+        var source = ClientSource.Head("Shipping.Client") + ApiCallSource.Write(model.Discriminator) + dtos.Written +
+                     assigning;
 
         var references = ((string) AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
             .Split(Path.PathSeparator)

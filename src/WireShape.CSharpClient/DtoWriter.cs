@@ -221,17 +221,20 @@ public sealed class DtoWriter(ApiModel model, TypeNames names)
 
         foreach (var member in described.Members.Where(member => !inherited.Contains(member.Name)))
         {
-            var property = names.Of(member.Type, member.IsOptional);
+            var property = names.Of(member.Type, member.IsNullable);
             written.AppendLine($"    [System.Text.Json.Serialization.JsonPropertyName(\"{member.Name}\")]");
 
             // Settable, because what a call is given is filled in by whoever makes the call, field by field as
             // it is typed in, and not only at the moment the value is built. A member only ever written by the
-            // answer is not asked of whoever calls, because there is nothing for them to say about it.
+            // answer is not asked of whoever calls, because there is nothing for them to say about it. A member
+            // that may be absent is not asked either, and leaving it out is not giving it null: it holds whether
+            // it was given at all, so that one left out does not travel and one given null travels as null.
             var declaration = member switch
             {
-                {IsAnswerOnly: true, IsOptional: false} =>
+                {IsOptional: true} => $"public ApiOptional<{property}> {Pascal(member.Name)} {{ get; set; }}",
+                {IsAnswerOnly: true, IsNullable: false} =>
                     $"public {property} {Pascal(member.Name)} {{ get; set; }} = default!;",
-                {IsOptional: true} => $"public {property} {Pascal(member.Name)} {{ get; set; }}",
+                {IsAnswerOnly: true} => $"public {property} {Pascal(member.Name)} {{ get; set; }}",
                 _ => $"public required {property} {Pascal(member.Name)} {{ get; set; }}"
             };
 

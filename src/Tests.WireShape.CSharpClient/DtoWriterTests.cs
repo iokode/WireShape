@@ -39,8 +39,23 @@ public class DtoWriterTests
         Assert.Contains("public sealed partial record Consignment", written);
         Assert.Contains("[System.Text.Json.Serialization.JsonPropertyName(\"code\")]", written);
         Assert.Contains("public required TrackingCode Code { get; set; }", written);
-        Assert.Contains("public string? Instructions { get; set; }", written);
+        Assert.Contains("public required string? Instructions { get; set; }", written);
         Assert.Contains("public DateOnly Dispatched { get; set; } = default!;", written);
+    }
+
+    /// <summary>
+    /// Not asked of whoever calls, and holding whether it was given at all, so that leaving it out is not giving
+    /// it null.
+    /// </summary>
+    [Fact]
+    public void AMemberThatMayBeAbsent_ShouldBeDeclaredAsOneThatMayBeLeftOut()
+    {
+        // Act
+        var written = Write(typeof(Amendment));
+
+        // Assert
+        Assert.Contains("public ApiOptional<TrackingCode> Code { get; set; }", written);
+        Assert.Contains("public ApiOptional<string?> Instructions { get; set; }", written);
     }
 
     [Fact]
