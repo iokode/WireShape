@@ -58,6 +58,22 @@ public class DtoWriterTests
         Assert.Contains("public ApiOptional<string?> Instructions { get; set; }", written);
     }
 
+    /// <summary>
+    /// Only the answer carries it, so it is asked of nobody: one that may be null is left null, and one that may
+    /// be left out still says whether it came.
+    /// </summary>
+    [Fact]
+    public void AMemberOnlyAnAnswerCarries_ShouldBeAskedOfNobody()
+    {
+        // Act
+        var written = Write(typeof(Delivery));
+
+        // Assert
+        Assert.Contains("public string? SignedBy { get; set; }", written);
+        Assert.DoesNotContain("required string? SignedBy", written);
+        Assert.Contains("public ApiOptional<string?> Note { get; set; }", written);
+    }
+
     [Fact]
     public void AnEnumerationThatTravelsByWord_ShouldSayTheWordWhereItDiffersFromTheName()
     {

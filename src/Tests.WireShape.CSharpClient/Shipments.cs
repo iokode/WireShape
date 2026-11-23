@@ -24,6 +24,9 @@ public sealed record PhoneParts(string Country, string Number);
 /// <summary>A change to a consignment, which leaves out whatever it does not change.</summary>
 public sealed record Amendment;
 
+/// <summary>What the answer says of a delivery, which nobody who calls gives.</summary>
+public sealed record Delivery;
+
 /// <summary>What a consignee is reached on, which travels as a text or as its parts.</summary>
 public readonly record struct Phone(string Value);
 
@@ -72,6 +75,15 @@ public static class Shipments
             {
                 new Member("code", typeof(TrackingCode), IsNullable: false, IsOptional: true),
                 new Member("instructions", typeof(string), IsNullable: true, IsOptional: true)
+            },
+            null,
+            Array.Empty<Kind>()),
+
+        [typeof(Delivery)] = new Structure.Object(
+            new[]
+            {
+                new Member("signedBy", typeof(string), IsNullable: true, IsAnswerOnly: true),
+                new Member("note", typeof(string), IsNullable: true, IsOptional: true, IsAnswerOnly: true)
             },
             null,
             Array.Empty<Kind>()),

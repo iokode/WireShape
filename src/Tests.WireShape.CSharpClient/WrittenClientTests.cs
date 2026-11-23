@@ -248,6 +248,7 @@ public class WrittenClientTests
         Assert.Null(instructions.GetType().GetProperty("Value")!.GetValue(instructions));
     }
 
+    /// <summary>No pair, which the application reads as left out: what it reads into is left as it was.</summary>
     [Fact]
     public void AMemberThatMayBeAbsentLeftOutInAQuery_ShouldWriteNoPair()
     {
@@ -258,6 +259,20 @@ public class WrittenClientTests
         Assert.Equal("?page=2", query);
     }
 
+    /// <summary>
+    /// A pair with no text, which is how the application reads it back as null, and not no pair, which it reads as
+    /// left out.
+    /// </summary>
+    [Fact]
+    public void AMemberThatMayBeAbsentGivenNullInAQuery_ShouldBeWrittenWithNoText()
+    {
+        // Act
+        var query = Query(("remarks", Optional(typeof(string), null)), ("page", 2));
+
+        // Assert
+        Assert.Equal("?remarks=&page=2", query);
+    }
+
     [Fact]
     public void AMemberThatMayBeAbsentGivenInAQuery_ShouldBeWrittenAsWhatItWasGiven()
     {
@@ -266,6 +281,210 @@ public class WrittenClientTests
 
         // Assert
         Assert.Equal("?code=QX7F2P", query);
+    }
+
+    [Fact]
+    public void AMemberThatMayBeAbsentAndArrivesWithAValue_ShouldBeReadAsGivenThatValue()
+    {
+        // Act
+        var amendment = JsonSerializer.Deserialize("""{"code":"QX7F2P"}""", Type(nameof(Amendment)), Options)!;
+
+        // Assert
+        var code = Get(amendment, "Code");
+        Assert.True(IsGiven(code));
+        Assert.Equal("QX7F2P", code.GetType().GetProperty("Value")!.GetValue(code)!.ToString());
+    }
+
+    /// <summary>Null is not one of its values, so a member that may be left out but not null refuses it.</summary>
+    [Fact]
+    public void AMemberThatMayBeAbsentButNotNullAndArrivesAsNull_ShouldBeRefused()
+    {
+        // Act
+        var reading = () => JsonSerializer.Deserialize("""{"code":null}""", Type(nameof(Amendment)), Options);
+
+        // Assert
+        var refused = Assert.Throws<JsonException>(reading);
+        Assert.Contains(nameof(TrackingCode), refused.Message);
+    }
+
+    /// <summary>Only a member can be left out, and a member left out is not written at all.</summary>
+    [Fact]
+    public void AValueLeftOutWrittenOnItsOwn_ShouldBeRefused()
+    {
+        // Arrange
+        var leftOut = Optional(typeof(string), null, given: false);
+
+        // Act
+        var writing = () => JsonSerializer.Serialize(leftOut, leftOut.GetType(), Options);
+
+        // Assert
+        Assert.Throws<NotSupportedException>(writing);
+    }
+
+    [Fact]
+    public void TheValueOfAMemberLeftOut_ShouldBeRefused()
+    {
+        // Arrange
+        var leftOut = Optional(typeof(string), null, given: false);
+
+        // Act
+        var reading = () => Read(leftOut, "Value");
+
+        // Assert
+        Assert.Throws<InvalidOperationException>(reading);
+    }
+
+    [Fact]
+    public void AMemberLeftOutMadeOnPurpose_ShouldBeLeftOut()
+    {
+        // Act
+        var leftOut = OptionalType(typeof(string)).GetProperty("LeftOut")!.GetValue(null)!;
+
+        // Assert
+        Assert.False(IsGiven(leftOut));
+    }
+
+    /// <summary>
+    /// Two of them are the same where both were left out, or both were given the same value; given null is not
+    /// left out.
+    /// </summary>
+    [Theory]
+    [InlineData(false, null, false, null, true)]
+    [InlineData(true, "a", true, "a", true)]
+    [InlineData(true, null, true, null, true)]
+    [InlineData(true, "a", true, "b", false)]
+    [InlineData(true, null, false, null, false)]
+    [InlineData(true, "a", false, null, false)]
+    public void TwoMembersThatMayBeAbsent_ShouldBeEqualWhereTheyHoldTheSame(
+        bool leftGiven,
+        string? left,
+        bool rightGiven,
+        string? right,
+        bool equal)
+    {
+        // Arrange
+        var one = Optional(typeof(string), left, leftGiven);
+        var other = Optional(typeof(string), right, rightGiven);
+        var type = OptionalType(typeof(string));
+
+        // Act
+        var equals = one.Equals(other);
+        var sameHash = one.GetHashCode() == other.GetHashCode();
+        var byOperator = (bool) type.GetMethod("op_Equality")!.Invoke(null, new[] {one, other})!;
+        var byInequality = (bool) type.GetMethod("op_Inequality")!.Invoke(null, new[] {one, other})!;
+
+        // Assert
+        Assert.Equal(equal, equals);
+        Assert.Equal(equal, byOperator);
+        Assert.Equal(!equal, byInequality);
+        if (equal)
+        {
+            Assert.True(sameHash);
+        }
+    }
+
+    [Theory]
+    [InlineData(true, "At the back door", "At the back door")]
+    [InlineData(true, null, "")]
+    [InlineData(false, null, "")]
+    public void AMemberThatMayBeAbsent_ShouldReadAsTheTextOfWhatItHolds(bool given, string? value, string text)
+    {
+        // Arrange
+        var optional = Optional(typeof(string), value, given);
+
+        // Act
+        var read = optional.ToString();
+
+        // Assert
+        Assert.Equal(text, read);
+    }
+
+    /// <summary>The text a value travels as, which a member left out or given null has none of.</summary>
+    [Theory]
+    [InlineData(true, "QX7F2P", "QX7F2P")]
+    [InlineData(true, null, null)]
+    [InlineData(false, null, null)]
+    public void AMemberThatMayBeAbsent_ShouldTravelAsTheTextOfWhatItWasGiven(bool given, string? code, string? text)
+    {
+        // Arrange
+        var optional = code == null
+            ? Optional(Type(nameof(TrackingCode)), null, given)
+            : Optional(Type(nameof(TrackingCode)), New(nameof(TrackingCode), code), given);
+
+        // Act
+        var written = (string?) Type("ApiCall").GetMethod("Text")!.Invoke(null, new[] {optional});
+
+        // Assert
+        Assert.Equal(text, written);
+    }
+
+    /// <summary>
+    /// The query a written call carries of an object of the query: no pair for a member left out, one with no text
+    /// for a member given null, and one with what it was given for the rest.
+    /// </summary>
+    [Fact]
+    public async Task AnObjectOfTheQueryOfACall_ShouldCarryItsMembersAsTheyWereGivenOrLeftOut()
+    {
+        // Arrange
+        var filter = Activator.CreateInstance(Type(nameof(Amendment)))!;
+        Set(filter, "Code", Optional(Type(nameof(TrackingCode)), New(nameof(TrackingCode), "QX7F2P")));
+        Set(filter, "Instructions", Optional(typeof(string), null));
+
+        // Act
+        var sent = await Call("ListAsync", filter);
+
+        // Assert
+        Assert.Equal("/consignments?code=QX7F2P&instructions=", sent.PathAndQuery);
+    }
+
+    [Fact]
+    public async Task AnObjectOfTheQueryOfACallWhoseMembersWereAllLeftOut_ShouldCarryNoQuery()
+    {
+        // Arrange
+        var filter = Activator.CreateInstance(Type(nameof(Amendment)))!;
+
+        // Act
+        var sent = await Call("ListAsync", filter);
+
+        // Assert
+        Assert.Equal("/consignments", sent.PathAndQuery);
+    }
+
+    [Fact]
+    public async Task AnObjectOfTheQueryOfACallLeftOut_ShouldCarryNoQuery()
+    {
+        // Act
+        var sent = await Call("ListAsync", null);
+
+        // Assert
+        Assert.Equal("/consignments", sent.PathAndQuery);
+    }
+
+    [Fact]
+    public async Task ABodyOfACallWhoseMembersWereLeftOut_ShouldCarryNone()
+    {
+        // Arrange
+        var amendment = Activator.CreateInstance(Type(nameof(Amendment)))!;
+
+        // Act
+        var sent = await Call("ChangeAsync", amendment);
+
+        // Assert
+        Assert.Equal("{}", sent.Body);
+    }
+
+    [Fact]
+    public async Task ABodyOfACallWithAMemberGivenNull_ShouldCarryItAsNull()
+    {
+        // Arrange
+        var amendment = Activator.CreateInstance(Type(nameof(Amendment)))!;
+        Set(amendment, "Instructions", Optional(typeof(string), null));
+
+        // Act
+        var sent = await Call("ChangeAsync", amendment);
+
+        // Assert
+        Assert.Equal("""{"instructions":null}""", sent.Body);
     }
 
     /// <summary>
@@ -658,6 +877,54 @@ public class WrittenClientTests
         return given ? Activator.CreateInstance(optional, value)! : Activator.CreateInstance(optional)!;
     }
 
+    private static Type OptionalType(Type holding) =>
+        written.Value.GetType("Shipping.Client.ApiOptional`1", throwOnError: true)!.MakeGenericType(holding);
+
+    private static object? Read(object instance, string member)
+    {
+        try
+        {
+            return instance.GetType().GetProperty(member)!.GetValue(instance);
+        }
+        catch (TargetInvocationException invoked)
+        {
+            throw invoked.InnerException!;
+        }
+    }
+
+    /// <summary>
+    /// Makes a call of the written client of consignments with this value, and answers with what it sent: the
+    /// path and query of the request and the text of its body.
+    /// </summary>
+    private static async Task<(string PathAndQuery, string? Body)> Call(string method, object? value)
+    {
+        var recording = new Recording();
+        using var http = new HttpClient(recording) {BaseAddress = new Uri("http://api.test")};
+        var client = Activator.CreateInstance(Type("ConsignmentsClient"), http)!;
+
+        await (Task) client.GetType().GetMethod(method)!.Invoke(client, new[] {value, CancellationToken.None})!;
+
+        return (recording.Sent!.RequestUri!.PathAndQuery, recording.Body);
+    }
+
+    /// <summary>Answers every request with nothing, and keeps what the last one sent.</summary>
+    private sealed class Recording : HttpMessageHandler
+    {
+        public HttpRequestMessage? Sent { get; private set; }
+
+        public string? Body { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            Sent = request;
+            Body = request.Content == null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+
+            return new HttpResponseMessage(HttpStatusCode.NoContent);
+        }
+    }
+
     private static bool IsGiven(object optional) =>
         (bool) optional.GetType().GetProperty("IsGiven")!.GetValue(optional)!;
 
@@ -688,8 +955,8 @@ public class WrittenClientTests
     }
 
     /// <summary>
-    /// The runtime and the types of the model, written as a client writes them and compiled into an assembly of
-    /// their own, against the framework the tests run on.
+    /// The runtime, the types of the model and a client of consignments, written as a client writes them and
+    /// compiled into an assembly of their own, against the framework the tests run on.
     /// </summary>
     private static Assembly Compile()
     {
@@ -704,8 +971,34 @@ public class WrittenClientTests
             })
         };
 
-        var model = new ApiModel(Array.Empty<ApiAction>(), types, Array.Empty<HierarchyKind>(), "kind");
+        // A change sent as a body, and the same object as what the query of a listing carries.
+        var actions = new[]
+        {
+            new ApiAction
+            {
+                Method = "PATCH",
+                Route = "/consignments",
+                Controller = "Consignments",
+                MethodName = "ChangeAsync",
+                Parameters = new[] {new ApiParameter("amendment", typeof(Amendment), ApiParameterOrigin.Body, false)},
+                Result = null
+            },
+            new ApiAction
+            {
+                Method = "GET",
+                Route = "/consignments",
+                Controller = "Consignments",
+                MethodName = "ListAsync",
+                Parameters = new[] {new ApiParameter("filter", typeof(Amendment), ApiParameterOrigin.Query, true)},
+                Result = null
+            }
+        };
+
+        var model = new ApiModel(actions, types, Array.Empty<HierarchyKind>(), "kind");
         var names = new TypeNames(model);
+
+        var clients = new ClientWriter(model, names, controller => controller + "Client");
+        clients.Write(model.Actions);
 
         foreach (var type in new[]
                  {
@@ -728,7 +1021,7 @@ public class WrittenClientTests
             """;
 
         var source = ClientSource.Head("Shipping.Client") + ApiCallSource.Write(model.Discriminator) + dtos.Written +
-                     assigning;
+                     clients.Written + assigning;
 
         var references = ((string) AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
             .Split(Path.PathSeparator)

@@ -2,7 +2,10 @@
 
 **Package:** `IOKode.WireShape`
 
-Declare a form for a type whose written shape is settled by a converter of its own, because nothing can be asked about one of those. Everything else is answered by the writer of the wire. What a type turns out to be is declared too, but that is not a form: [hierarchies and enumerations](05%20Hierarchies%20and%20enumerations.md) says how. Neither is whether a member of a type may be left out, which [is declared apart](#a-member-that-may-be-left-out).
+Declare a form for a type whose written shape is settled by a converter of its own, because nothing can be asked
+about one of those. Everything else is answered by the writer of the wire. What a type turns out to be is declared
+too, but that is not a form: [hierarchies and enumerations](05%20Hierarchies%20and%20enumerations.md) says how.
+Neither is whether a member of a type may be left out, which [is declared apart](#a-member-that-may-be-left-out).
 
 Everything here is of the booking API of [getting started](02%20Getting%20started.md).
 
@@ -220,21 +223,30 @@ model and in a document; it never becomes a declaration.
 
 ## A member that may be left out
 
-Some types exist so that leaving them out means something. A member of type `Amended<string>` is not nullable, because leaving it out does not mean "null" but "not changed". Nothing about the type says that, so it is declared, one type at a time:
+Some types exist so that leaving them out means something. A member of type `Amended<string>` is not nullable, because
+leaving it out does not mean "null" but "not changed". Nothing about the type says that, so it is declared, one type at
+a time:
 
 ```csharp
 bookings.AddOptional<SeatPreference>();
 ```
 
-or for a family a convention recognizes, with a [source](04%20Reading%20declarations%20from%20a%20source.md#where-it-can-be-read-that-a-member-may-be-left-out).
+or for a family a convention recognizes, with a
+[source](04%20Reading%20declarations%20from%20a%20source.md#where-it-can-be-read-that-a-member-may-be-left-out).
 
 A member of such a type is `IsOptional` on the wire, whatever the language says of its nullability.
 
-**It is not a form.** Whether a member may be left out has nothing to do with what the type looks like once written: a wrapper that disappears may need it, and so may a type that travels as a text, as another type, as an object, or as it stands. Tying it to one form would leave the others without it, or push a type into a form that is not its own.
+**It is not a form.** Whether a member may be left out has nothing to do with what the type looks like once written: a
+wrapper that disappears may need it, and so may a type that travels as a text, as another type, as an object, or as it
+stands. Tying it to one form would leave the others without it, or push a type into a form that is not its own.
 
-**Left out is not null.** A member left out and the same member present with null are two different things on the wire, and a member may be either, both or neither: `IsOptional` says whether it may be left out and `IsNullable` whether it may be null. A member whose type disappears may be null where what it leaves behind may, so `Amended<string?>` is both and `Amended<string>` only the first.
+**Left out is not null.** A member left out and the same member present with null are two different things on the wire,
+and a member may be either, both or neither: `IsOptional` says whether it may be left out and `IsNullable` whether it
+may be null. A member whose type disappears may be null where what it leaves behind may, so `Amended<string?>` is both
+and `Amended<string>` only the first.
 
-**Saying it twice is saying it once.** There is no other answer for a second declarer to disagree with, so nothing is refused and no declarer is kept.
+**Saying it twice is saying it once.** There is no other answer for a second declarer to disagree with, so nothing is
+refused and no declarer is kept.
 
 ## Where the declaring ends
 

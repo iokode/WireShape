@@ -78,9 +78,15 @@ always something.
 
 ## A member that may be left out
 
-The generator works out which members a schema requires from the type: `[Required]`, the `required` of the language, `[JsonRequired]`, or a member that is never null where `NonNullableReferenceTypesAsRequired` tells it to read that as required. None of them is the fact that a member [may be left out](03%20Declaring%20a%20form.md#a-member-that-may-be-left-out), which is declared of its type on the wire. `OptionalSchemaFilter` takes every such member out of `required`, in the schema and in each part a type that derives from another writes its own members in.
+The generator works out which members a schema requires from the type: `[Required]`, the `required` of the language,
+`[JsonRequired]`, or a member that is never null where `NonNullableReferenceTypesAsRequired` tells it to read that as
+required. None of them is the fact that a member
+[may be left out](03%20Declaring%20a%20form.md#a-member-that-may-be-left-out), which is declared of its type on the
+wire. `OptionalSchemaFilter` takes every such member out of `required`, in the schema and in each part a type that
+derives from another writes its own members in.
 
-It says nothing of null: a member that may be left out offers null only where it is also one that may be nothing, which is `NothingAtAllSchemaFilter`'s to say.
+It says nothing of null: a member that may be left out offers null only where it is also one that may be nothing, which
+is `NothingAtAllSchemaFilter`'s to say.
 
 ## A wrapper that does not travel
 

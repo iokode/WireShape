@@ -290,8 +290,8 @@ public static class ApiCallSource
             /// <summary>
             /// The query a call carries, with a value under its key and a collection as one pair per element, all
             /// under the same key, which is how the application reads a collection back. A value left out and an
-            /// empty collection write no pair, and an element that is null is written with no text, which is how the
-            /// application reads it back as null.
+            /// empty collection write no pair, and an element that is null, or a member that may be left out and
+            /// was given null, is written with no text, which is how the application reads it back as null.
             /// </summary>
             /// <exception cref="ArgumentException">
             /// A value is written as an object, or an element of a collection as a collection or an object: the
@@ -436,9 +436,16 @@ public static class ApiCallSource
                     return Texts(key, carried.Written);
                 }
 
+                // Left out, it writes no pair and the application leaves what it reads into as it was; given null,
+                // a pair with no text, which the application reads as null.
                 if (value is IApiOptional optional)
                 {
-                    return optional.IsGiven ? Texts(key, optional.Given) : Array.Empty<string>();
+                    return optional switch
+                    {
+                        {IsGiven: false} => Array.Empty<string>(),
+                        {Given: null} => new[] {string.Empty},
+                        _ => Texts(key, optional.Given)
+                    };
                 }
 
                 var written = JsonSerializer.SerializeToElement(value, value.GetType(), Options);

@@ -101,6 +101,93 @@ public class WireOptionalTests
     }
 
     [Fact]
+    public void ATypeDeclaredOptionalNamedAsAnArgument_ShouldBeOptional()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+        declaring.GetDeclarer("application").AddOptional(typeof(Nickname));
+
+        // Act
+        var optional = declaring.Build(serializer).IsOptional(typeof(Nickname));
+
+        // Assert
+        Assert.True(optional);
+    }
+
+    [Fact]
+    public void ATypeASourceRecognizes_ShouldBeOptional()
+    {
+        // Act
+        var optional = BuildWire().IsOptional(typeof(Kept<int>));
+
+        // Assert
+        Assert.True(optional);
+    }
+
+    /// <summary>The source is asked of the type itself, not of the nullable around it.</summary>
+    [Fact]
+    public void ANullableOfATypeASourceRecognizes_ShouldBeOptional()
+    {
+        // Act
+        var optional = BuildWire().IsOptional(typeof(Kept<int>?));
+
+        // Assert
+        Assert.True(optional);
+    }
+
+    /// <summary>Building copies what was declared, so what is declared afterwards is of no wire built before.</summary>
+    [Fact]
+    public void ATypeDeclaredOptionalAfterTheWireWasBuilt_ShouldNotBeOptionalOnIt()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+        var wire = declaring.Build(serializer);
+        declaring.GetDeclarer("application").AddOptional<Nickname>();
+
+        // Act
+        var optional = wire.IsOptional(typeof(Nickname));
+
+        // Assert
+        Assert.False(optional);
+    }
+
+    [Theory]
+    [InlineData(nameof(Wrapped.Twice), true)]
+    [InlineData(nameof(Wrapped.Number), true)]
+    [InlineData(nameof(Wrapped.Plain), false)]
+    public void AMemberWhoseWrappersLeaveWhatMayBeNull_ShouldBeNullable(string name, bool nullable)
+    {
+        // Act
+        var member = BuildWire().GetMembers(typeof(Wrapped))!.Single(member => member.Name == name);
+
+        // Assert
+        Assert.Equal(nullable, member.IsNullable);
+    }
+
+    /// <summary>
+    /// A member declared by hand came out of nothing in the code, so nothing can be read of what its wrapper
+    /// leaves behind, and it is as nullable as it was declared.
+    /// </summary>
+    [Fact]
+    public void AMemberDeclaredByHandWhoseTypeDisappears_ShouldBeAsNullableAsItWasDeclared()
+    {
+        // Arrange
+        var declaring = new WireBuilder();
+        var declarer = declaring.GetDeclarer("application");
+        declarer.AddShapeSource(new Unwrapping());
+        declarer.Add<Window>(new Shape.Members(new[]
+        {
+            new Member("label", typeof(Amended<string>), IsNullable: false)
+        }));
+
+        // Act
+        var members = declaring.Build(serializer).GetMembers(typeof(Window))!;
+
+        // Assert
+        Assert.False(Assert.Single(members).IsNullable);
+    }
+
+    [Fact]
     public void ANullableOfATypeDeclaredOptional_ShouldBeOptional()
     {
         // Act
@@ -187,6 +274,9 @@ public class WireOptionalTests
         Window Window,
         string? Instructions,
         string Code);
+
+    /// <summary>Wrappers inside wrappers, and one that leaves a value that may be nothing.</summary>
+    public sealed record Wrapped(Amended<Kept<string?>> Twice, Kept<int?> Number, Amended<Kept<string>> Plain);
 
     private sealed class Unwrapping : IShapeSource
     {

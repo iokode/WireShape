@@ -59,7 +59,9 @@ Three things it does not decide:
 
 ## A member that may be left out
 
-A member that [may be left out](03%20Declaring%20a%20form.md#a-member-that-may-be-left-out) is an `ApiOptional<T>`, which holds whether it was given at all. Left out, it is not written; given, it is written as what it was given, null included where null is one of its values:
+A member that [may be left out](03%20Declaring%20a%20form.md#a-member-that-may-be-left-out) is an `ApiOptional<T>`,
+which holds whether it was given at all. Left out, it is not written; given, it is written as what it was given, null
+included where null is one of its values:
 
 ```csharp
 await bookings.ChangeAsync(reference, new BookingChange {DepartsOn = new DateOnly(2026, 12, 4)});
@@ -69,11 +71,19 @@ await bookings.ChangeAsync(reference, new BookingChange {Remarks = null});
 // {"remarks":null}: the remarks are taken away, and the day is left as it was
 ```
 
-Giving one is assigning the value, because a value converts into one; not assigning it is leaving it out. `IsGiven` says which it is, and `Value` is what it was given, which throws where it was left out. An answer that leaves such a member out is read as left out, and one that carries it as null is read as given null.
+Giving one is assigning the value, because a value converts into one; not assigning it is leaving it out. `IsGiven` says
+which it is, and `Value` is what it was given, which throws where it was left out. An answer that leaves such a member
+out is read as left out, and one that carries it as null is read as given null.
 
-**Why a type of its own and not a nullable:** null is a value such a member may be given, and a nullable that is null where it was left out would send one where the other was meant.
+In a query, where such a member travels when the object it belongs to is a value of the query, left out is no pair
+and given null is a pair with no text. The application leaves what it reads into as it was for the first and makes it
+null for the second, so the two stay apart there too.
 
-A member that may be null and may not be left out is `required` and nullable: whoever calls says null, and does not say it by saying nothing.
+**Why a type of its own and not a nullable:** null is a value such a member may be given, and a nullable that is null
+where it was left out would send one where the other was meant.
+
+A member that may be null and may not be left out is `required` and nullable: whoever calls says null, and does not say
+it by saying nothing.
 
 ## One of several forms
 
@@ -128,7 +138,7 @@ itself: no package to install and no version to keep in step. It holds:
 - the refusal of a call, with the reason it gave and the messages about each field of the request, keyed by the field as the application named it;
 - a member that may be left out, and holds whether it was given;
 - the options everything is read and written with, which leave out a member that was left out;
-- the making of a URL, a query, a body and a form, with a value in a route or a query written as it is in a body, and a collection in a query or a form as one pair or field per element under the same name, a null element with no text; an object, a collection of collections and a collection of objects are refused there, and an object and a collection in a route, because the application reads none of them back from the JSON they are written as.
+- the making of a URL, a query, a body and a form, with a value in a route or a query written as it is in a body, and a collection in a query or a form as one pair or field per element under the same name, a null element with no text, and a member that may be left out as no pair in a query where it was left out and as a pair with no text where it was given null; an object, a collection of collections and a collection of objects are refused there, and an object and a collection in a route, because the application reads none of them back from the JSON they are written as.
 
 And one attribute, for a kind added to a hierarchy that another client declares. That hierarchy was written without
 knowing the kind existed, so the kind is the one to say it.

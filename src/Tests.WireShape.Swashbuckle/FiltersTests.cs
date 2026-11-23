@@ -304,6 +304,61 @@ public class FiltersTests
         Assert.IsType<OpenApiSchemaReference>(schema.Properties["code"]);
     }
 
+    /// <summary>Left out and null are two facts, and a member that is both is offered as what it is or nothing.</summary>
+    [Fact]
+    public void AMemberThatMayBeAbsentAndNothing_ShouldBeSaidToOfferWhatItIsOrNothingAtAll()
+    {
+        // Arrange
+        var schema = new OpenApiSchema
+        {
+            Properties = new Dictionary<string, IOpenApiSchema>
+            {
+                ["instructions"] = new OpenApiSchemaReference("Shipping.Instructions")
+            }
+        };
+
+        var declaring = new WireBuilder();
+        declaring.GetDeclarer("application").AddOptional<string>();
+        var filter = new NothingAtAllSchemaFilter(declaring.Build(BuildWriter(new TrackingCodeJsonConverter())));
+
+        // Act
+        filter.Apply(schema, BuildContext(typeof(Consignment)));
+
+        // Assert
+        var offered = Assert.IsType<OpenApiSchema>(schema.Properties["instructions"]).AnyOf!;
+        Assert.Equal("Shipping.Instructions", Assert.IsType<OpenApiSchemaReference>(offered[0]).Reference.Id);
+        Assert.Equal(JsonSchemaType.Null, Assert.IsType<OpenApiSchema>(offered[1]).Type);
+    }
+
+    [Fact]
+    public void AMemberThatMayNotBeAbsent_ShouldStayRequired()
+    {
+        // Arrange
+        var schema = new OpenApiSchema {Required = new HashSet<string> {"code", "copies"}};
+        var filter = new OptionalSchemaFilter(new WireBuilder().Build(BuildWriter(new TrackingCodeJsonConverter())));
+
+        // Act
+        filter.Apply(schema, BuildContext(typeof(Reprint)));
+
+        // Assert
+        Assert.Equal(new[] {"code", "copies"}, schema.Required);
+    }
+
+    /// <summary>A schema that requires nothing is left requiring nothing, and not given a list it did not have.</summary>
+    [Fact]
+    public void ASchemaThatRequiresNothing_ShouldBeLeftRequiringNothing()
+    {
+        // Arrange
+        var schema = new OpenApiSchema();
+        var filter = new OptionalSchemaFilter(BuildWireOfOptionalCodes());
+
+        // Act
+        filter.Apply(schema, BuildContext(typeof(Reprint)));
+
+        // Assert
+        Assert.Null(schema.Required);
+    }
+
     [Fact]
     public void AMemberThatMayBeAbsent_ShouldNotBeRequired()
     {
