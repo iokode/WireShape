@@ -126,7 +126,7 @@ public class WireStructuresTests
         // Assert
         var described = Assert.IsType<Structure.Object>(types[typeof(Consignment)]);
         Assert.Equal(new[] {"Code", "Instructions", "Parcels"}, described.Members.Select(member => member.Name));
-        Assert.True(described.Members[1].IsOptional);
+        Assert.True(described.Members[1].IsNullable);
         Assert.True(described.NeedsItsOwnName);
         Assert.Contains(typeof(TrackingCode), types.Keys);
         Assert.Contains(typeof(Parcel), types.Keys);

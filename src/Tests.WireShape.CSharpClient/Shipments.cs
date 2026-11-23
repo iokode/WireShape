@@ -21,6 +21,12 @@ public sealed record Pallet : Parcel;
 
 public sealed record PhoneParts(string Country, string Number);
 
+/// <summary>A change to a consignment, which leaves out whatever it does not change.</summary>
+public sealed record Amendment;
+
+/// <summary>What the answer says of a delivery, which nobody who calls gives.</summary>
+public sealed record Delivery;
+
 /// <summary>What a consignee is reached on, which travels as a text or as its parts.</summary>
 public readonly record struct Phone(string Value);
 
@@ -57,28 +63,46 @@ public static class Shipments
         [typeof(Consignment)] = new Structure.Object(
             new[]
             {
-                new Member("code", typeof(TrackingCode), IsOptional: false),
-                new Member("instructions", typeof(string), IsOptional: true),
-                new Member("dispatched", typeof(DispatchedOn), IsOptional: false, IsAnswerOnly: true)
+                new Member("code", typeof(TrackingCode), IsNullable: false),
+                new Member("instructions", typeof(string), IsNullable: true),
+                new Member("dispatched", typeof(DispatchedOn), IsNullable: false, IsAnswerOnly: true)
+            },
+            null,
+            Array.Empty<Kind>()),
+
+        [typeof(Amendment)] = new Structure.Object(
+            new[]
+            {
+                new Member("code", typeof(TrackingCode), IsNullable: false, IsOptional: true),
+                new Member("instructions", typeof(string), IsNullable: true, IsOptional: true)
+            },
+            null,
+            Array.Empty<Kind>()),
+
+        [typeof(Delivery)] = new Structure.Object(
+            new[]
+            {
+                new Member("signedBy", typeof(string), IsNullable: true, IsAnswerOnly: true),
+                new Member("note", typeof(string), IsNullable: true, IsOptional: true, IsAnswerOnly: true)
             },
             null,
             Array.Empty<Kind>()),
 
         [typeof(Parcel)] = new Structure.Object(
-            new[] {new Member("weight", typeof(decimal), IsOptional: false)},
+            new[] {new Member("weight", typeof(decimal), IsNullable: false)},
             null,
             new[] {new Kind(typeof(Envelope), "envelope"), new Kind(typeof(Pallet), "pallet")}),
 
         [typeof(Envelope)] = new Structure.Object(
-            new[] {new Member("weight", typeof(decimal), IsOptional: false)},
+            new[] {new Member("weight", typeof(decimal), IsNullable: false)},
             typeof(Parcel),
             Array.Empty<Kind>()),
 
         [typeof(Pallet)] = new Structure.Object(
             new[]
             {
-                new Member("weight", typeof(decimal), IsOptional: false),
-                new Member("boxes", typeof(int), IsOptional: false)
+                new Member("weight", typeof(decimal), IsNullable: false),
+                new Member("boxes", typeof(int), IsNullable: false)
             },
             typeof(Parcel),
             Array.Empty<Kind>()),
@@ -86,8 +110,8 @@ public static class Shipments
         [typeof(PhoneParts)] = new Structure.Object(
             new[]
             {
-                new Member("country", typeof(string), IsOptional: false),
-                new Member("number", typeof(string), IsOptional: false)
+                new Member("country", typeof(string), IsNullable: false),
+                new Member("number", typeof(string), IsNullable: false)
             },
             null,
             Array.Empty<Kind>()),

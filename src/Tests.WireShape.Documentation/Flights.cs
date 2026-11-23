@@ -14,7 +14,7 @@ namespace IOKode.WireShape.Documentation.Tests;
 /// <remarks>
 /// One of every hard case: a value whose name is all that is left of it, one whose kind the reader has already,
 /// a value that travels as another type, a hierarchy, an enumeration by word and one by number, a wrapper that
-/// disappears, the content of a file, and a value that comes out as one of several forms.
+/// disappears and may be left out, the content of a file, and a value that comes out as one of several forms.
 /// </remarks>
 public static class Flights
 {
@@ -40,6 +40,9 @@ public static class Flights
 
         // A family a convention recognizes, which cannot be listed one by one.
         bookings.AddShapeSource(new AmendedWireShapes());
+
+        // And a member of that family may be left out, which is what it is for: left out is "leave it as it is".
+        bookings.AddOptionalSource(new AmendedIsOptional());
 
         // The content of a file, which in an application is whatever its framework calls one.
         bookings.Add<BoardingPassFile>(new Shape.AsFile());
@@ -119,6 +122,19 @@ public sealed class AmendedWireShapes : IShapeSource
             ? new Shape.Unwraps(0)
             : null;
 }
+
+/// <summary>
+/// A member that may be left out of a change, whatever type it wraps. Left out, nothing changes; present, even with
+/// null, it is the new value.
+/// </summary>
+public sealed class AmendedIsOptional : IOptionalSource
+{
+    public bool IsOptional(Type type, ISerializer serializer) =>
+        type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Amended<>);
+}
+
+/// <summary>A change to a booking: the day it departs and the remarks on it, each left out where it does not change.</summary>
+public sealed record BookingChange(Amended<DepartsOn> DepartsOn, Amended<string?> Remarks);
 
 /// <summary>A boarding pass as it is sent and as it comes back, which an application reads as a file.</summary>
 public sealed class BoardingPassFile;

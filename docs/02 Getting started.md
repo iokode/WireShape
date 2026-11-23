@@ -63,6 +63,9 @@ bookings.Add<Money>(new Shape.AsAnother(typeof(MoneyParts)));
 // A family a convention recognizes, which cannot be listed one by one.
 bookings.AddShapeSource(new AmendedWireShapes());
 
+// And a member of that family may be left out, which is what it is for: left out is "leave it as it is".
+bookings.AddOptionalSource(new AmendedIsOptional());
+
 // The content of a file, which in an application is whatever its framework calls one.
 bookings.Add<BoardingPassFile>(new Shape.AsFile());
 
@@ -90,7 +93,7 @@ Read it once more by what each line is for, because the whole of this library is
 | `PassengerId`, `FlightDuration` | A GUID and a number. Any GUID is any GUID and any number any number, so they keep their names too |
 | `DepartsOn`, `BoardingAt` | A date and a moment. **The reader's language has a kind for these already**, so no name of ours goes over them: they are written where they are used |
 | `Money` | An amount and a currency are one thing, and they travel as one object. The document points at **that** object, and `Money` is not in it |
-| `Amended<T>` | A change that may leave a field out. It disappears once written, and what it wrapped takes its place |
+| `Amended<T>` | A change that may leave a field out. It disappears once written, and what it wrapped takes its place. A member of it may be left out, which is not the same as giving it null: left out leaves the field as it was, and null makes it nothing |
 | `BoardingPassFile` | It travels as content. The writer would answer that it is an object of six members, which is not what travels |
 | `PassengerRef` | One of several forms: an identifier or the passenger. Which one arrived is told by **what arrived** |
 | `Segment` | A hierarchy, declared kind by kind, because nobody holding a base knows every type that derives from it |

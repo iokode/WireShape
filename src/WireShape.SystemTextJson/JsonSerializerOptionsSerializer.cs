@@ -54,7 +54,7 @@ public sealed class JsonSerializerOptionsSerializer(JsonSerializerOptions option
             .Select(property => new Member(
                 property.Name,
                 property.PropertyType,
-                IsOptional(property, nullability),
+                IsNullable(property, nullability),
                 IsAnswerOnly: property.Set == null && property.AssociatedParameter == null,
                 Declared: property.AttributeProvider as MemberInfo))
             .ToArray();
@@ -145,10 +145,10 @@ public sealed class JsonSerializerOptionsSerializer(JsonSerializerOptions option
     }
 
     /// <summary>
-    /// Whether a member may be absent: a value that may be nothing, or a reference the language says may be
+    /// Whether a member may travel as null: a value that may be nothing, or a reference the language says may be
     /// read as null.
     /// </summary>
-    private static bool IsOptional(JsonPropertyInfo property, NullabilityInfoContext nullability)
+    private static bool IsNullable(JsonPropertyInfo property, NullabilityInfoContext nullability)
     {
         if (Nullable.GetUnderlyingType(property.PropertyType) != null)
         {

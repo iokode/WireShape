@@ -59,7 +59,7 @@ public sealed class ClientWriter(ApiModel model, TypeNames names, Func<string, s
 
         var parameters = action.Parameters
             .Select((parameter, position) =>
-                $"{names.Of(parameter.Type, parameter.IsOptional)} {Camel(parameter.Name)}" +
+                $"{names.Of(parameter.Type, isNullable: parameter.IsOptional)} {Camel(parameter.Name)}" +
                 (position >= optionalFrom ? " = null" : string.Empty))
             .Append("CancellationToken cancellationToken = default");
 

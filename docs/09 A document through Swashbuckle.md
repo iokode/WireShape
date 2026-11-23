@@ -26,6 +26,7 @@ services.AddSwaggerGen(options =>
     options.SchemaFilter<EnumerationSchemaFilter>();
     options.SchemaFilter<UnwrapSchemaFilter>(nameOf);
     options.SchemaFilter<NothingAtAllSchemaFilter>();
+    options.SchemaFilter<OptionalSchemaFilter>();
     options.DocumentFilter<DeclaredComponentsDocumentFilter>(nameOf);
     options.DocumentFilter<DeclaredKindsDocumentFilter>(nameOf, "kind");
     options.DocumentFilter<UnwrapDocumentFilter>();
@@ -45,6 +46,7 @@ What each filter does:
 | `EnumerationSchemaFilter` | What the wire writes for each value of an enumeration, found by writing them and looking at what came out |
 | `UnwrapSchemaFilter` | Takes note of a type that disappears once written |
 | `NothingAtAllSchemaFilter` | That a member which may be nothing may be nothing, where what it travels as is pointed at by name |
+| `OptionalSchemaFilter` | That a member which may be left out is not required |
 | `DeclaredComponentsDocumentFilter` | The schema of every declared type something in the document points at |
 | `DeclaredKindsDocumentFilter` | What a type turns out to be, where the wire knows its kinds and its writer does not |
 | `UnwrapDocumentFilter` | Puts what a wrapper wrapped where the wrapper was, and takes the wrapper out |
@@ -73,6 +75,18 @@ same thing twice, and this one was read from where the form is declared.
 A reference has no room to say it. Nothing beside a reference is read, so the only way left to say it is to offer
 the one thing or nothing at all. Without this, a member the wire writes as null is described as a member that is
 always something.
+
+## A member that may be left out
+
+The generator works out which members a schema requires from the type: `[Required]`, the `required` of the language,
+`[JsonRequired]`, or a member that is never null where `NonNullableReferenceTypesAsRequired` tells it to read that as
+required. None of them is the fact that a member
+[may be left out](03%20Declaring%20a%20form.md#a-member-that-may-be-left-out), which is declared of its type on the
+wire. `OptionalSchemaFilter` takes every such member out of `required`, in the schema and in each part a type that
+derives from another writes its own members in.
+
+It says nothing of null: a member that may be left out offers null only where it is also one that may be nothing, which
+is `NothingAtAllSchemaFilter`'s to say.
 
 ## A wrapper that does not travel
 

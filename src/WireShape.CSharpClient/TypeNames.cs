@@ -52,11 +52,13 @@ public sealed class TypeNames(ApiModel model)
     /// The name a value of this type takes in the client. Asking for it is what puts a type in the queue of what
     /// has to be declared, so a client only carries the types its calls actually mention.
     /// </summary>
-    public string Of(Type type, bool isOptional = false)
+    /// <param name="type">The type.</param>
+    /// <param name="isNullable">Whether the value may be null where it is written.</param>
+    public string Of(Type type, bool isNullable = false)
     {
         var name = Write(type);
 
-        return isOptional && !name.EndsWith("?") ? name + "?" : name;
+        return isNullable && !name.EndsWith("?") ? name + "?" : name;
     }
 
     private string Write(Type type)

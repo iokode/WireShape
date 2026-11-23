@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace IOKode.WireShape;
 
@@ -34,6 +35,8 @@ public sealed class Wire
     private readonly IReadOnlyList<IHierarchySource> kindSources;
     private readonly IReadOnlyDictionary<Type, IReadOnlyDictionary<object, string>> byEnumeration;
     private readonly IReadOnlyList<IEnumerationSource> wordSources;
+    private readonly IReadOnlySet<Type> optional;
+    private readonly IReadOnlyList<IOptionalSource> optionalSources;
 
     private readonly IReadOnlyDictionary<Type, Declaration> declaredShapes;
     private readonly IReadOnlyCollection<HierarchyKind> declaredKinds;
@@ -45,7 +48,9 @@ public sealed class Wire
         IReadOnlyDictionary<Type, IReadOnlyDictionary<Type, string>> byBase,
         IReadOnlyList<IHierarchySource> kindSources,
         IReadOnlyDictionary<Type, IReadOnlyDictionary<object, string>> byEnumeration,
-        IReadOnlyList<IEnumerationSource> wordSources)
+        IReadOnlyList<IEnumerationSource> wordSources,
+        IReadOnlySet<Type> optional,
+        IReadOnlyList<IOptionalSource> optionalSources)
     {
         this.serializer = serializer;
         this.byType = byType;
@@ -54,6 +59,8 @@ public sealed class Wire
         this.kindSources = kindSources;
         this.byEnumeration = byEnumeration;
         this.wordSources = wordSources;
+        this.optional = optional;
+        this.optionalSources = optionalSources;
 
         declaredShapes = NameEveryShape();
         declaredKinds = NameEveryKind();
@@ -103,14 +110,48 @@ public sealed class Wire
     /// answers where nothing was declared. Null where neither could say, which is not "it carries nothing":
     /// whoever reads it has to say that it could not be told.
     /// </summary>
+    /// <remarks>
+    /// A member whose type is declared optional is optional, whatever answered and whatever it said: what a
+    /// member may be left out of is a fact of its type, and neither its form nor its nullability is that fact.
+    /// <para>
+    /// A member whose type disappears once written may travel as null where what it leaves behind may: what
+    /// travels is that, and the language says of it what it says of the argument and not of the wrapper.
+    /// </para>
+    /// </remarks>
     public IReadOnlyList<Member>? GetMembers(Type type)
     {
-        if (GetShape(type) is Shape.Members declared)
+        var answered = GetShape(type) is Shape.Members declared
+            ? declared.Value
+            : serializer.GetMembers(type);
+
+        if (answered == null)
         {
-            return declared.Value;
+            return null;
         }
 
-        return serializer.GetMembers(type);
+        // One for this answer and no longer, because a context of these is not made to be read from two threads
+        // and a wire answers whoever asks, from wherever they ask.
+        var nullability = new NullabilityInfoContext();
+
+        return answered
+            .Select(member => member with
+            {
+                IsNullable = member.IsNullable || LeavesNull(member, nullability),
+                IsOptional = member.IsOptional || IsOptional(member.Type)
+            })
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Whether a member of this type may be absent from what travels: what was declared of the type, or what a
+    /// source reads. A nullable of such a type is such a type, as it is everywhere else on a wire.
+    /// </summary>
+    public bool IsOptional(Type type)
+    {
+        var underlying = Nullable.GetUnderlyingType(type) ?? type;
+
+        return optional.Contains(underlying) ||
+               optionalSources.Any(source => source.IsOptional(underlying, serializer));
     }
 
     /// <summary>
@@ -362,6 +403,34 @@ public sealed class Wire
         }
 
         types[type] = ObjectOf(type, types, unanswered);
+    }
+
+    /// <summary>
+    /// Whether what a member leaves behind once its wrappers disappear may be null, by what the language says of
+    /// the argument each of them leaves. Nothing can be told of a member that came out of nothing in the code.
+    /// </summary>
+    private bool LeavesNull(Member member, NullabilityInfoContext nullability)
+    {
+        var said = member.Declared switch
+        {
+            PropertyInfo property => nullability.Create(property),
+            FieldInfo field => nullability.Create(field),
+            _ => null
+        };
+
+        var type = member.Type;
+        while (said != null && GetShape(type) is Shape.Unwraps unwraps)
+        {
+            type = type.GetGenericArguments()[unwraps.ArgumentIndex];
+            said = said.GenericTypeArguments[unwraps.ArgumentIndex];
+
+            if (Nullable.GetUnderlyingType(type) != null || said.ReadState == NullabilityState.Nullable)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private Structure ObjectOf(Type type, Dictionary<Type, Structure> types, List<Type> unanswered)

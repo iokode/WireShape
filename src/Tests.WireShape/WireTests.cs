@@ -313,7 +313,7 @@ public class WireTests
     public void TheMembersDeclaredOfAType_ShouldBeAnsweredBeforeWhatWhoeverWritesSays()
     {
         // Arrange
-        var declared = new[] {new Member("code", typeof(string), IsOptional: false)};
+        var declared = new[] {new Member("code", typeof(string), IsNullable: false)};
         var declaring = new WireBuilder();
         var declarer = declaring.GetDeclarer("application");
         declarer.Add<Count>(new Shape.Members(declared));
@@ -322,7 +322,7 @@ public class WireTests
         var members = declaring.Build(serializer).GetMembers(typeof(Count));
 
         // Assert
-        Assert.Same(declared, members);
+        Assert.Equal(declared, members);
     }
 
     [Fact]
@@ -349,10 +349,10 @@ public class WireTests
         // Arrange
         var declaring = new WireBuilder();
         var declarer = declaring.GetDeclarer("application");
-        declarer.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsOptional: false)}));
+        declarer.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsNullable: false)}));
 
         // Act
-        declarer.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsOptional: false)}));
+        declarer.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsNullable: false)}));
 
         // Assert
         var members = declaring.Build(serializer).GetMembers(typeof(Count))!;
@@ -365,11 +365,11 @@ public class WireTests
         // Arrange
         var declaring = new WireBuilder();
         var declarer = declaring.GetDeclarer("application");
-        declarer.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsOptional: false)}));
+        declarer.Add<Count>(new Shape.Members(new[] {new Member("code", typeof(string), IsNullable: false)}));
 
         // Act
         var declaringAnother = () => declarer.Add<Count>(
-            new Shape.Members(new[] {new Member("reference", typeof(string), IsOptional: false)}));
+            new Shape.Members(new[] {new Member("reference", typeof(string), IsNullable: false)}));
 
         // Assert
         Assert.Throws<InvalidOperationException>(declaringAnother);

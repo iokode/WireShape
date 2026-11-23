@@ -24,6 +24,106 @@ public static class ApiCallSource
         }
 
         /// <summary>
+        /// A member that may be left out of what travels, and that holds whether it was given at all. Left out, it
+        /// does not travel; given, it travels as what it was given, null included where null is one of its
+        /// values. The two are different things to whoever reads them: in a change, null is "make it nothing" and
+        /// left out is "leave it as it is".
+        /// </summary>
+        /// <remarks>
+        /// A value converts into one, so giving it is assigning the value, null included. Not assigning it at all
+        /// is leaving it out, which is what a new one is.
+        /// </remarks>
+        [JsonConverter(typeof(ApiOptionalJsonConverterFactory))]
+        public readonly struct ApiOptional<T> : IApiOptional, IEquatable<ApiOptional<T>>
+        {
+            private readonly T value;
+
+            public ApiOptional(T value)
+            {
+                this.value = value;
+                IsGiven = true;
+            }
+
+            /// <summary>A member left out.</summary>
+            public static ApiOptional<T> LeftOut => default;
+
+            /// <summary>Whether it was given, null included, rather than left out.</summary>
+            public bool IsGiven { get; }
+
+            /// <summary>What it was given.</summary>
+            /// <exception cref="InvalidOperationException">It was left out, so it holds nothing.</exception>
+            public T Value => IsGiven
+                ? value
+                : throw new InvalidOperationException($"This {typeof(T).Name} was left out, so it holds no value.");
+
+            object? IApiOptional.Given => Value;
+
+            public static implicit operator ApiOptional<T>(T value) => new(value);
+
+            public bool Equals(ApiOptional<T> other) =>
+                IsGiven == other.IsGiven && (!IsGiven || EqualityComparer<T>.Default.Equals(value, other.value));
+
+            public override bool Equals(object? other) => other is ApiOptional<T> optional && Equals(optional);
+
+            public override int GetHashCode() => IsGiven ? HashCode.Combine(true, value) : 0;
+
+            public override string ToString() => IsGiven ? value?.ToString() ?? string.Empty : string.Empty;
+
+            public static bool operator ==(ApiOptional<T> left, ApiOptional<T> right) => left.Equals(right);
+
+            public static bool operator !=(ApiOptional<T> left, ApiOptional<T> right) => !left.Equals(right);
+        }
+
+        /// <summary>What every member that may be left out says of itself, whatever it holds.</summary>
+        public interface IApiOptional
+        {
+            bool IsGiven { get; }
+
+            /// <summary>What it was given.</summary>
+            /// <exception cref="InvalidOperationException">It was left out, so it holds nothing.</exception>
+            object? Given { get; }
+        }
+
+        /// <summary>
+        /// Reads and writes a member that may be left out as what it holds. Whether it travels at all is not
+        /// decided here: a member left out is not written, which is said of the member and not of its value.
+        /// </summary>
+        public sealed class ApiOptionalJsonConverterFactory : JsonConverterFactory
+        {
+            public override bool CanConvert(Type typeToConvert) =>
+                typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(ApiOptional<>);
+
+            public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) =>
+                (JsonConverter) Activator.CreateInstance(
+                    typeof(ApiOptionalJsonConverter<>).MakeGenericType(typeToConvert.GetGenericArguments()[0]))!;
+        }
+
+        /// <inheritdoc cref="ApiOptionalJsonConverterFactory"/>
+        public sealed class ApiOptionalJsonConverter<T> : JsonConverter<ApiOptional<T>>
+        {
+            /// <summary>Null is a value it may be given, so it is read as given and not as left out.</summary>
+            public override bool HandleNull => true;
+
+            public override ApiOptional<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+                new(JsonSerializer.Deserialize<T>(ref reader, options)!);
+
+            /// <exception cref="NotSupportedException">
+            /// It was left out. Only a member can be left out, and a member left out is not written at all.
+            /// </exception>
+            public override void Write(Utf8JsonWriter writer, ApiOptional<T> value, JsonSerializerOptions options)
+            {
+                if (!value.IsGiven)
+                {
+                    throw new NotSupportedException(
+                        $"A {typeof(T).Name} left out cannot be written: only a member can be left out, and a " +
+                        "member left out is not written at all.");
+                }
+
+                JsonSerializer.Serialize(writer, value.Value, options);
+            }
+        }
+
+        /// <summary>
         /// Says that this type is one of the kinds another can turn out to be, and the word that tells it apart.
         /// A kind the client that declares the hierarchy knows is said there; a kind another client adds is said
         /// here, because a hierarchy written without knowing a kind existed cannot name it.
@@ -91,7 +191,7 @@ public static class ApiCallSource
 
             public static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
             {
-                TypeInfoResolver = new DefaultJsonTypeInfoResolver {Modifiers = {Declare}}
+                TypeInfoResolver = new DefaultJsonTypeInfoResolver {Modifiers = {Declare, LeaveOut}}
             };
 
             /// <summary>
@@ -136,6 +236,22 @@ public static class ApiCallSource
                     }
                 }
             }
+
+            /// <summary>
+            /// A member that may be left out and was left out is not written, which is what tells it apart from one given
+            /// null.
+            /// </summary>
+            private static void LeaveOut(JsonTypeInfo information)
+            {
+                foreach (var property in information.Properties)
+                {
+                    if (property.PropertyType.IsGenericType &&
+                        property.PropertyType.GetGenericTypeDefinition() == typeof(ApiOptional<>))
+                    {
+                        property.ShouldSerialize = (_, value) => value is IApiOptional {IsGiven: true};
+                    }
+                }
+            }
         }
 
         /// <summary>The parts of making a call that every call shares.</summary>
@@ -174,8 +290,8 @@ public static class ApiCallSource
             /// <summary>
             /// The query a call carries, with a value under its key and a collection as one pair per element, all
             /// under the same key, which is how the application reads a collection back. A value left out and an
-            /// empty collection write no pair, and an element that is null is written with no text, which is how the
-            /// application reads it back as null.
+            /// empty collection write no pair, and an element that is null, or a member that may be left out and
+            /// was given null, is written with no text, which is how the application reads it back as null.
             /// </summary>
             /// <exception cref="ArgumentException">
             /// A value is written as an object, or an element of a collection as a collection or an object: the
@@ -298,6 +414,8 @@ public static class ApiCallSource
             {
                 null => null,
                 IApiValue carried => Text(carried.Written),
+                IApiOptional {IsGiven: false} => null,
+                IApiOptional optional => Text(optional.Given),
                 _ => Written(JsonSerializer.SerializeToElement(value, value.GetType(), Options))
             };
 
@@ -316,6 +434,18 @@ public static class ApiCallSource
                 if (value is IApiValue carried)
                 {
                     return Texts(key, carried.Written);
+                }
+
+                // Left out, it writes no pair and the application leaves what it reads into as it was; given null,
+                // a pair with no text, which the application reads as null.
+                if (value is IApiOptional optional)
+                {
+                    return optional switch
+                    {
+                        {IsGiven: false} => Array.Empty<string>(),
+                        {Given: null} => new[] {string.Empty},
+                        _ => Texts(key, optional.Given)
+                    };
                 }
 
                 var written = JsonSerializer.SerializeToElement(value, value.GetType(), Options);

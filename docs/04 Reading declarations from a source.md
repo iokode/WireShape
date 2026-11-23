@@ -4,7 +4,7 @@
 
 Some forms are already said by something else. Reading them from there saves a line that would say the same thing
 twice. That is what a source is for: a wire is where a form is kept, not where it is deduced. There is a source for
-each of the three things a wire is declared: a form, a kind and a word.
+each of the four things a wire is declared: a form, a kind, a word, and whether a member may be left out.
 
 Everything here is of the booking API of [getting started](02%20Getting%20started.md).
 
@@ -150,3 +150,28 @@ bookings.AddWordSource(new SnakeCasedWords());
 
 Unlike a source of forms or of kinds, it has one question and not two. Which values an enumeration has is answered
 by the language, so nobody ever has to ask a source to name them all.
+
+## Where it can be read that a member may be left out
+
+A type whose absence means something is usually one of a family, and a family is recognized and not listed. An
+`IOptionalSource` says the convention once:
+
+```csharp
+/// <summary>A member that may be left out of a change, whatever type it wraps.</summary>
+public sealed class AmendedIsOptional : IOptionalSource
+{
+    public bool IsOptional(Type type, ISerializer serializer) =>
+        type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Amended<>);
+}
+```
+
+Take it with `AddOptionalSource`:
+
+```csharp
+bookings.AddOptionalSource(new AmendedIsOptional());
+```
+
+A member may be left out where a declaration or any source says so. False is having nothing to say, and there is nothing
+a source could take back, so no source is asked before another. It has one question and not two, as a source of words
+does: a type is recognized when it is met, and nobody has to ask a source to name them all.
+[Declaring a form](03%20Declaring%20a%20form.md#a-member-that-may-be-left-out) says what being one means.

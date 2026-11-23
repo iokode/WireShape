@@ -45,7 +45,26 @@ public class JsonSerializerOptionsSerializerTests
     }
 
     [Fact]
-    public void AMemberThatMayBeNothing_ShouldBeSaidToBeOptional()
+    public void AMemberThatMayBeNothing_ShouldBeSaidToBeNullable()
+    {
+        // Arrange
+        var serializer = BuildSerializer();
+
+        // Act
+        var nullable = serializer.GetMembers(typeof(Consignment))!
+            .Where(member => member.IsNullable)
+            .Select(member => member.Name);
+
+        // Assert
+        Assert.Equal(new[] {"instructions", "declaredValue"}, nullable);
+    }
+
+    /// <summary>
+    /// Whether a member may be absent is declared of its type, and whoever writes has nothing to say about it:
+    /// a member that may be nothing is not one that may be left out.
+    /// </summary>
+    [Fact]
+    public void AMemberThatMayBeNothing_ShouldNotBeSaidToBeOptional()
     {
         // Arrange
         var serializer = BuildSerializer();
@@ -56,7 +75,7 @@ public class JsonSerializerOptionsSerializerTests
             .Select(member => member.Name);
 
         // Assert
-        Assert.Equal(new[] {"instructions", "declaredValue"}, optional);
+        Assert.Empty(optional);
     }
 
     [Fact]
